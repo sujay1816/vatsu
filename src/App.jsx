@@ -1091,7 +1091,7 @@ export default function Vatsu() {
               <span style={{ fontSize:18 }}>🔗</span>
               <div>
                 <div style={{ fontSize:13, fontWeight:700, color:"#1dd1a1", fontFamily:TF }}>Goals are linked to your Dashboard</div>
-                <div style={{ fontSize:12, color:T.textSub, marginTop:3, lineHeight:1.6, fontFamily:BODY }}>Contributing to a goal automatically records a <b style={{ color:T.text }}>Savings &amp; Investments</b> expense for {MONTHS[activeMonth]}, reducing your remaining balance.</div>
+                <div style={{ fontSize:12, color:T.textSub, marginTop:3, lineHeight:1.6, fontFamily:BODY }}>Contributing to a goal automatically records a <b style={{ color:T.text }}>Savings & Investments</b> expense for {MONTHS[activeMonth]}, reducing your remaining balance.</div>
               </div>
             </div>
             {/* Add goal form */}
@@ -1631,425 +1631,729 @@ export default function Vatsu() {
 function AIAdvisor({ monthlyData, goals, loans, activeMonth, activeYear, theme, allCats, totalInc, totalExp, curMonth }) {
   const T   = THEMES[theme];
   const IS2 = iStyle(T);
-
   const [msgs,    setMsgs   ] = useState([]);
   const [input,   setInput  ] = useState("");
   const [loading, setLoading] = useState(false);
   const bottom = useRef(null);
   useEffect(() => { bottom.current?.scrollIntoView({ behavior:"smooth" }); }, [msgs]);
 
-  /* ── Compute financial context ── */
   const catBreak = allCats
     .map(c => ({ ...c, spent: curMonth.expenses.filter(e=>e.category===c.id).reduce((s,e)=>s+e.amount,0) }))
-    .filter(c => c.spent > 0)
-    .sort((a,b) => b.spent - a.spent);
+    .filter(c => c.spent>0).sort((a,b)=>b.spent-a.spent);
 
-  const totalEMI = loans.reduce((s,l) => {
-    const st = l.startYear*12+l.startMonth, cu = activeYear*12+activeMonth;
-    return cu>=st && cu<st+(l.tenureMonths||9999) ? s+l.emi : s;
-  }, 0);
-
-  const remaining  = totalInc - totalExp - totalEMI;
-  const savePct    = totalInc > 0 ? Math.round(Math.max(0, remaining/totalInc*100)) : 0;
-  const spentPct   = totalInc > 0 ? Math.round((totalExp/totalInc)*100) : 0;
+  const totalEMI   = loans.reduce((s,l)=>{ const st=l.startYear*12+l.startMonth,cu=activeYear*12+activeMonth; return cu>=st&&cu<st+(l.tenureMonths||9999)?s+l.emi:s; },0);
+  const remaining  = totalInc-totalExp-totalEMI;
+  const savePct    = totalInc>0?Math.round(Math.max(0,remaining/totalInc*100)):0;
+  const spentPct   = totalInc>0?Math.round((totalExp/totalInc)*100):0;
   const topCat     = catBreak[0];
-  const foodAmt    = catBreak.find(c=>c.id==="food")?.spent || 0;
-  const subAmt     = catBreak.find(c=>c.id==="subscriptions")?.spent || 0;
-  const shopAmt    = catBreak.find(c=>c.id==="shopping")?.spent || 0;
-  const transAmt   = catBreak.find(c=>c.id==="transport")?.spent || 0;
-  const savingsAmt = catBreak.find(c=>c.id==="savings")?.spent || 0;
-  const hasData    = totalInc > 0 || totalExp > 0;
+  const foodAmt    = catBreak.find(c=>c.id==="food")?.spent||0;
+  const subAmt     = catBreak.find(c=>c.id==="subscriptions")?.spent||0;
+  const shopAmt    = catBreak.find(c=>c.id==="shopping")?.spent||0;
+  const transAmt   = catBreak.find(c=>c.id==="transport")?.spent||0;
+  const entAmt     = catBreak.find(c=>c.id==="entertainment")?.spent||0;
+  const savingsAmt = catBreak.find(c=>c.id==="savings")?.spent||0;
+  const hasData    = totalInc>0||totalExp>0;
+  const month      = MONTHS[activeMonth];
+  const prevKey    = activeMonth===0?(activeYear-1)+"-11":activeYear+"-"+(activeMonth-1);
+  const prevData   = monthlyData[prevKey];
+  const prevExp    = prevData?prevData.expenses.reduce((s,e)=>s+e.amount,0):0;
+  const momDelta   = prevExp>0?Math.round(((totalExp-prevExp)/prevExp)*100):null;
+  const pendingGoals   = goals.filter(g=>g.saved<g.target);
+  const completedGoals = goals.filter(g=>g.saved>=g.target);
+  const nearDeadline   = goals.filter(g=>{ if(!g.deadline)return false; const d=Math.ceil((new Date(g.deadline)-new Date())/864e5); return d>0&&d<=90; });
+  const emergencyGoal  = goals.find(g=>g.label.toLowerCase().includes("emergency"));
+  const emiPct         = totalInc>0?Math.round((totalEMI/totalInc)*100):0;
 
-  /* Month-over-month */
-  const prevKey  = activeMonth===0 ? (activeYear-1)+"-11" : activeYear+"-"+(activeMonth-1);
-  const prevData = monthlyData[prevKey];
-  const prevExp  = prevData ? prevData.expenses.reduce((s,e)=>s+e.amount,0) : 0;
-  const momDelta = prevExp>0 ? Math.round(((totalExp-prevExp)/prevExp)*100) : null;
+  /* ─── nl: joins array of strings with newline ─── */
+  function nl(arr) { return arr.join("\n"); }
 
-  /* Goals */
-  const pendingGoals  = goals.filter(g=>g.saved<g.target);
-  const completedGoals= goals.filter(g=>g.saved>=g.target);
-  const nearDeadline  = goals.filter(g=>{
-    if(!g.deadline) return false;
-    const d = Math.ceil((new Date(g.deadline)-new Date())/(864e5));
-    return d>0 && d<=90;
-  });
-  const emergencyGoal = goals.find(g=>g.label.toLowerCase().includes("emergency"));
+  /* ─── INTENT DETECTION ─── */
+  function detectIntent(q) {
+    const t = q.toLowerCase().replace(/[?!.,]/g,"").trim();
+    const map = {
+      savings:      [/sav(e|ing|ings)/,/save more/,/saving habit/,/paisa bachao/,/set aside/,/corpus/,/accumulate/],
+      spending:     [/overspend/,/where.*money/,/where.*go/,/where.*spend/,/money.*going/,/biggest.*expense/,/top.*spend/,/kahan.*paisa/,/expense.*break/],
+      budget:       [/budget/,/allocat/,/50.30.20/,/limit.*spend/,/spend.*limit/,/financial plan/,/monthly plan/],
+      emergency:    [/emergency/,/safety net/,/rainy day/,/cushion/,/crisis fund/,/contingency/],
+      food:         [/food/,/dining/,/eating/,/restaurant/,/swiggy/,/zomato/,/cooking/,/grocery/,/groceries/,/meal/],
+      loans:        [/loan/,/emi/,/debt/,/borrow/,/repay/,/credit/,/home loan/,/car loan/,/personal loan/,/karz/],
+      goals:        [/goal/,/target/,/dream/,/achieve/,/milestone/,/saving for/,/vacation/,/holiday/,/trip/],
+      health:       [/health/,/score/,/performance/,/how.*doing/,/overall/,/summary/,/report/,/on track/],
+      invest:       [/invest/,/sip/,/mutual fund/,/stock/,/equity/,/nifty/,/sensex/,/portfolio/,/grow.*money/,/wealth/,/ppf/,/elss/,/nps/,/where.*put/,/where.*invest/,/best investment/],
+      tax:          [/tax/,/80c/,/80d/,/hra/,/income tax/,/itr/,/deduction/,/tds/,/tax slab/,/new regime/,/old regime/,/section 80/],
+      subscriptions:[/subscription/,/netflix/,/ott/,/spotify/,/amazon prime/,/hotstar/,/streaming/,/cancel.*sub/],
+      income:       [/income/,/salary/,/earning/,/revenue/,/source.*income/,/hike/,/passive income/,/side income/],
+      transport:    [/transport/,/travel/,/commut/,/cab/,/ola/,/uber/,/petrol/,/fuel/,/metro/],
+      shopping:     [/shopping/,/clothes/,/fashion/,/buy.*online/,/amazon/,/flipkart/,/impulse/],
+      terms:        [/what is/,/what.*mean/,/explain/,/define/,/tell me about/,/\bsip\b/,/\bcagr\b/,/\belss\b/,/\bppf\b/,/\bnps\b/,/\bfd\b/,/cibil/,/credit score/,/inflation/,/compound/,/nav\b/,/xirr/,/net worth/,/liquid fund/,/ulip/],
+      motivation:   [/motivat/,/inspire/,/encourage/,/feel.*bad/,/stressed/,/worried/,/anxious/,/depress/,/overwhelm/,/broke/,/struggling/],
+      tips:         [/tip/,/trick/,/advice/,/suggest/,/best.*practice/,/habit/,/discipline/,/improve.*financ/],
+      greeting:     [/^hi$/, /^hello$/, /^hey$/, /^namaste/, /good morning/, /good evening/, /how are you/],
+      networth:     [/net worth/,/total.*asset/,/how.*rich/,/total.*wealth/],
+      insurance:    [/insurance/,/term.*plan/,/life.*cover/,/health.*insurance/,/premium/,/policy/],
+      realestate:   [/real estate/,/property/,/buy.*house/,/flat/,/apartment/,/rent.*buy/],
+      creditScore:  [/credit score/,/cibil score/,/improve.*credit/,/credit.*report/],
+    };
+    const scores = {};
+    for (const [intent, patterns] of Object.entries(map)) {
+      scores[intent] = patterns.filter(p => p.test(t)).length;
+    }
+    const best = Object.entries(scores).sort((a,b)=>b[1]-a[1])[0];
+    return best[1]>0 ? best[0] : "unknown";
+  }
 
-  /* ════════════════════════════════════════
-     RULE ENGINE
-  ════════════════════════════════════════ */
-  function analyse(question) {
-    const q = question.toLowerCase().trim();
-    const month = MONTHS[activeMonth];
+  /* ─── RESPONSE GENERATORS ─── */
+  function respond(intent, question) {
+    const noData = "No data yet for " + month + ". Add your income and expenses in the Dashboard first — then I will give you advice specific to your numbers!";
 
-    /* ── NO DATA ── */
-    if (!hasData) {
-      return "📊 No data yet for " + month + "!\n\nTo get personalised advice:\n1. Go to Dashboard\n2. Tap + Add Income\n3. Add your expenses\n4. Come back and ask me anything!\n\nI can help with saving tips, budget planning, goal tracking, loan analysis and more — all based on your real numbers.";
+    if (intent === "greeting") {
+      if (!hasData) return noData;
+      const status = savePct>=20 ? "You are doing great this month!" : savePct>=10 ? "You are on the right track, some room to improve." : "A few things we should work on together.";
+      return nl([
+        "Namaste! Here is your " + month + " snapshot:",
+        "Income: " + fmtINR(totalInc) + "  |  Spent: " + fmtINR(totalExp) + " (" + spentPct + "%)" + "  |  Remaining: " + fmtINR(remaining),
+        "Savings Rate: " + savePct + "%",
+        "",
+        status,
+        "",
+        "What would you like to discuss? I can help with savings, investments, tax planning, goals, loans, or anything else."
+      ]);
     }
 
-    /* ── SAVINGS ── */
-    if (/sav(e|ing|ings)|how much (can|should) i save|increase saving/.test(q)) {
+    if (intent === "savings") {
+      if (!hasData) return noData;
       const needed = Math.max(0, totalInc*0.20 - savingsAmt);
-      const lines = ["💰 Savings Analysis — " + month + "\n"];
-      if (savePct >= 20) {
-        lines.push("🌟 Excellent! You're saving " + savePct + "% of income — above the 20% target!");
-      } else if (savePct >= 10) {
-        lines.push("🟡 You're saving " + savePct + "% — getting there. You need " + fmtINR(Math.round(needed)) + " more to hit 20%.");
+      const ideal  = Math.round(totalInc*0.20);
+      const parts  = [];
+      parts.push("Savings Analysis — " + month);
+      parts.push("");
+      if (savePct>=20) {
+        parts.push("Excellent! You are saving " + savePct + "% — above the 20% target.");
+      } else if (savePct>=10) {
+        parts.push("You are saving " + savePct + "%. Target is 20%. You need " + fmtINR(Math.round(needed)) + " more this month.");
       } else {
-        lines.push("🔴 You're saving only " + savePct + "% — well below the 20% target.");
-        lines.push("Gap to reach 20%: " + fmtINR(Math.round(needed)));
+        parts.push("You are saving only " + savePct + "%. The target is 20% (" + fmtINR(ideal) + "/month). This is the single most important thing to fix.");
       }
-      lines.push("\nTop ways to save more:");
-      if (foodAmt > totalInc*0.20) lines.push("• Cut food spending by 20% → save " + fmtINR(Math.round(foodAmt*0.2)) + "/month");
-      if (subAmt > 0) lines.push("• Cancel unused subscriptions → " + fmtINR(subAmt) + "/month freed up");
-      if (shopAmt > totalInc*0.15) lines.push("• Reduce shopping by 25% → save " + fmtINR(Math.round(shopAmt*0.25)));
-      lines.push("• Pay yourself first — transfer savings on salary day before spending");
-      lines.push("\n💡 Use the Goals tab to track your savings targets automatically.");
-      return lines.join("\n");
+      parts.push("");
+      parts.push("How to save more:");
+      parts.push("1. Pay yourself first — transfer " + fmtINR(ideal) + " to savings on salary day before spending");
+      parts.push("2. Automate it — standing instruction so it happens without effort");
+      if (foodAmt > totalInc*0.20) parts.push("3. Cut food spending 20% — saves " + fmtINR(Math.round(foodAmt*0.2)) + "/month");
+      if (subAmt > 0) parts.push("4. Cancel unused subscriptions — " + fmtINR(subAmt) + "/month freed up");
+      if (shopAmt > totalInc*0.15) parts.push("5. Apply the 24-hour rule before purchases above Rs 500");
+      parts.push("");
+      parts.push("Once you save 20% consistently, the next step is investing. Ask me 'Where should I invest?' for the full guide!");
+      return nl(parts);
     }
 
-    /* ── OVERSPENDING / WHERE IS MONEY GOING ── */
-    if (/overspend|where.*money|where.*spend|spend.*most|biggest expense|top expense/.test(q)) {
-      const lines = ["📊 Spending Breakdown — " + month + "\n"];
-      lines.push("Income: " + fmtINR(totalInc) + " | Spent: " + fmtINR(totalExp) + " (" + spentPct + "%) | Left: " + fmtINR(remaining) + "\n");
-      catBreak.slice(0,6).forEach((c,i) => {
+    if (intent === "spending") {
+      if (!hasData) return noData;
+      const parts = [];
+      parts.push("Spending Breakdown — " + month);
+      parts.push("");
+      parts.push("Income:   " + fmtINR(totalInc));
+      parts.push("Spent:    " + fmtINR(totalExp) + " (" + spentPct + "% of income)");
+      parts.push("Left:     " + fmtINR(remaining));
+      parts.push("");
+      catBreak.slice(0,6).forEach((c,idx) => {
         const pct = totalInc>0 ? Math.round((c.spent/totalInc)*100) : 0;
-        const bar = "█".repeat(Math.min(10,Math.round(pct/3))) + "░".repeat(Math.max(0,10-Math.round(pct/3)));
-        lines.push((i===0?"🔴 ":"   ") + c.icon+" "+c.label+": "+fmtINR(c.spent)+" ("+pct+"%)\n   "+bar);
+        const bar = "=".repeat(Math.min(10,Math.round(pct/3))) + "-".repeat(Math.max(0,10-Math.round(pct/3)));
+        parts.push(c.icon + " " + c.label + ": " + fmtINR(c.spent) + " (" + pct + "%)");
+        parts.push("  [" + bar + "]");
       });
       if (topCat) {
-        lines.push("\n" + (topCat.spent>totalInc*0.35?"⚠️ ":"✅ ") + topCat.label + " is your biggest expense" + (topCat.spent>totalInc*0.35?" — consider a budget limit for it.":". Looks manageable."));
+        const pct = totalInc>0 ? Math.round((topCat.spent/totalInc)*100) : 0;
+        parts.push("");
+        parts.push((pct>30?"Warning: ":"") + topCat.label + " is your biggest expense at " + fmtINR(topCat.spent) + " (" + pct + "%). " + (pct>30?"Consider setting a budget limit.":"Looks manageable."));
       }
       if (momDelta!==null) {
-        lines.push("\n" + (momDelta>0?"📈":"📉") + " Spending is " + Math.abs(momDelta) + "% " + (momDelta>0?"higher":"lower") + " than last month (" + fmtINR(prevExp) + " → " + fmtINR(totalExp) + ").");
+        parts.push("");
+        parts.push("vs Last Month: " + (momDelta>0 ? "Spent " + momDelta + "% MORE (+" + fmtINR(totalExp-prevExp) + ")" : "Spent " + Math.abs(momDelta) + "% LESS (-" + fmtINR(prevExp-totalExp) + ")"));
       }
-      return lines.join("\n");
+      return nl(parts);
     }
 
-    /* ── BUDGET ── */
-    if (/budget|limit|allocat|50.30.20|rule/.test(q)) {
-      const lines = ["📐 Budget Recommendations — Based on " + fmtINR(totalInc) + " income\n"];
-      lines.push("Using the 50/30/20 rule:\n");
-      const recs = [
-        ["Needs (Rent+Food+Transport)", Math.round(totalInc*0.50), "🏠"],
-        ["Wants (Shopping+Entertainment)", Math.round(totalInc*0.30), "🛍️"],
-        ["Savings+Investments", Math.round(totalInc*0.20), "💰"],
-      ];
-      recs.forEach(([l,v,i]) => lines.push(i+" "+l+": "+fmtINR(v)));
-      lines.push("\nCategory-specific suggestions:");
-      if (foodAmt>0)  lines.push("🍜 Food: Budget "+fmtINR(Math.round(totalInc*0.15))+" (15%). Current: "+fmtINR(foodAmt));
-      if (transAmt>0) lines.push("🚗 Transport: Budget "+fmtINR(Math.round(totalInc*0.10))+" (10%). Current: "+fmtINR(transAmt));
-      if (subAmt>0)   lines.push("🔄 Subscriptions: Budget "+fmtINR(Math.round(totalInc*0.05))+" (5%). Current: "+fmtINR(subAmt));
-      if (shopAmt>0)  lines.push("🛍️ Shopping: Budget "+fmtINR(Math.round(totalInc*0.10))+" (10%). Current: "+fmtINR(shopAmt));
-      lines.push("\n💡 Click ⚙ Budgets in the Dashboard to set limits. Vatsu alerts you at 90%.");
-      return lines.join("\n");
+    if (intent === "budget") {
+      if (!hasData) return noData;
+      const parts = [];
+      parts.push("Budget Plan — " + fmtINR(totalInc) + " income (" + month + ")");
+      parts.push("");
+      parts.push("50/30/20 Rule:");
+      parts.push("Needs  (50%) = " + fmtINR(Math.round(totalInc*0.50)) + "  (rent, food, transport)");
+      parts.push("Wants  (30%) = " + fmtINR(Math.round(totalInc*0.30)) + "  (shopping, dining, fun)");
+      parts.push("Saving (20%) = " + fmtINR(Math.round(totalInc*0.20)) + "  (goals, investments)");
+      parts.push("");
+      parts.push("Category limits I recommend:");
+      parts.push("Food & Dining:  " + fmtINR(Math.round(totalInc*0.15)) + " (15%)" + (foodAmt>0 ? "  — you spent " + fmtINR(foodAmt) + (foodAmt>totalInc*0.15?" — over!" :" — ok!") : ""));
+      parts.push("Transport:      " + fmtINR(Math.round(totalInc*0.10)) + " (10%)" + (transAmt>0 ? "  — you spent " + fmtINR(transAmt) + (transAmt>totalInc*0.10?" — over!" :" — ok!") : ""));
+      parts.push("Shopping:       " + fmtINR(Math.round(totalInc*0.10)) + " (10%)" + (shopAmt>0 ? "  — you spent " + fmtINR(shopAmt) + (shopAmt>totalInc*0.10?" — over!" :" — ok!") : ""));
+      parts.push("Entertainment:  " + fmtINR(Math.round(totalInc*0.05)) + " (5%)" + (entAmt>0 ? "  — you spent " + fmtINR(entAmt) + (entAmt>totalInc*0.05?" — over!" :" — ok!") : ""));
+      parts.push("Subscriptions:  " + fmtINR(Math.round(totalInc*0.05)) + " (5%)" + (subAmt>0 ? "  — you spent " + fmtINR(subAmt) + (subAmt>totalInc*0.05?" — over!" :" — ok!") : ""));
+      parts.push("");
+      parts.push("Tip: Click the Budgets button in the Dashboard to set these limits. I will warn you at 90%.");
+      return nl(parts);
     }
 
-    /* ── EMERGENCY FUND ── */
-    if (/emergency|fund|crisis|rainy day|cushion/.test(q)) {
+    if (intent === "emergency") {
       const target  = totalExp>0 ? totalExp*6 : 300000;
       const current = emergencyGoal ? emergencyGoal.saved : 0;
       const pct     = target>0 ? Math.round((current/target)*100) : 0;
-      const monthly = Math.round(totalExp*0.10);
+      const monthly = totalExp>0 ? Math.round(totalExp*0.10) : 5000;
       const months  = current<target ? Math.ceil((target-current)/Math.max(monthly,1)) : 0;
-      const lines   = ["🛡️ Emergency Fund Analysis\n"];
-      lines.push("Ideal target (6× monthly expenses): " + fmtINR(Math.round(target)));
+      const parts   = [];
+      parts.push("Emergency Fund Guide");
+      parts.push("");
+      parts.push("This is the most important financial safety net. Without it, one emergency can destroy years of progress.");
+      parts.push("");
+      parts.push("Your ideal target: " + fmtINR(Math.round(target)) + " (6x your monthly expenses)");
       if (emergencyGoal) {
-        lines.push("Your progress: " + fmtINR(current) + " (" + pct + "%)");
-        const barLen = Math.round(pct/10);
-        lines.push("["+"█".repeat(barLen)+"░".repeat(10-barLen)+"] "+pct+"%");
+        const bar = "#".repeat(Math.round(pct/10)) + ".".repeat(10-Math.round(pct/10));
+        parts.push("Your progress:  " + fmtINR(current) + " [" + bar + "] " + pct + "%");
+        if (current>=target) {
+          parts.push("You are fully covered! Major milestone achieved.");
+        } else {
+          parts.push("Still needed: " + fmtINR(Math.round(target-current)));
+          parts.push("At " + fmtINR(monthly) + "/month you will be done in " + months + " months.");
+        }
       } else {
-        lines.push("❌ No emergency fund goal found in Goals tab.");
+        parts.push("No emergency fund goal found. Create one in the Goals tab with target " + fmtINR(Math.round(target)) + ".");
       }
-      if (current >= target) {
-        lines.push("\n✅ Fully funded! You're protected against 6 months of expenses.");
-      } else {
-        lines.push("\nStill needed: " + fmtINR(Math.round(target-current)));
-        lines.push("At " + fmtINR(monthly) + "/month (10% of expenses) → funded in " + months + " months");
-        lines.push("\n💡 Create a goal named 'Emergency Fund' with target " + fmtINR(Math.round(target)) + " in the Goals tab.");
-      }
-      return lines.join("\n");
+      parts.push("");
+      parts.push("Where to keep it:");
+      parts.push("- Liquid mutual fund (best: 6-7% return, withdraw in 1 day)");
+      parts.push("- High-yield savings account (4-6% return)");
+      parts.push("- NOT in stocks or long-term FDs — you need instant access");
+      return nl(parts);
     }
 
-    /* ── FOOD ── */
-    if (/food|dining|eat|restaurant|swiggy|zomato|cook/.test(q)) {
-      if (foodAmt===0) return "No food expenses in " + month + " yet. Add them in the Dashboard to get a food spending analysis!";
+    if (intent === "food") {
+      if (foodAmt===0) return "No food expenses in " + month + " yet. Add them in the Dashboard to get analysis. Tip: Tracking alone reduces spending by 10-15% because awareness changes behaviour.";
       const ideal = Math.round(totalInc*0.15);
-      const over  = foodAmt - ideal;
-      const lines = ["🍜 Food & Dining — " + month + "\n"];
-      lines.push("Spent: " + fmtINR(foodAmt) + " | Ideal (15%): " + fmtINR(ideal));
-      lines.push(over>0 ? "Over by: " + fmtINR(over) + " ⚠️" : "✅ Within ideal range!");
-      if (over > 0) {
-        lines.push("\nWays to cut food costs:");
-        lines.push("• Meal prep on Sunday — saves ₹2,000–₹4,000/month");
-        lines.push("• Use food apps only on weekends");
-        lines.push("• Cook breakfast and lunch at home");
-        lines.push("• Buy groceries weekly, not daily");
-        lines.push("\n💡 Try the 'No Eating Out Week' challenge — it could save you " + fmtINR(Math.round(foodAmt*0.4)) + " this month!");
+      const over  = foodAmt-ideal;
+      const parts = [];
+      parts.push("Food Spending — " + month);
+      parts.push("");
+      parts.push("You spent:    " + fmtINR(foodAmt));
+      parts.push("Ideal (15%):  " + fmtINR(ideal));
+      parts.push(over>0 ? "Over by:      " + fmtINR(over) + "  — action needed!" : "Status:       Within target — good job!");
+      parts.push("");
+      parts.push("Tips to cut food costs:");
+      parts.push("- Meal prep on Sunday: saves Rs 2,000-4,000/month");
+      parts.push("- Swiggy/Zomato maximum 2x per week");
+      parts.push("- Carry lunch to work 4 days a week");
+      parts.push("- Buy groceries weekly in bulk, not daily");
+      parts.push("- Cook breakfast at home: saves Rs 1,500-2,500/month");
+      if (over>0) {
+        parts.push("");
+        parts.push("If you cut food by 20%, you save " + fmtINR(Math.round(foodAmt*0.2)) + "/month = " + fmtINR(Math.round(foodAmt*0.2*12)) + "/year!");
       }
-      return lines.join("\n");
+      parts.push("");
+      parts.push("Try the No Eating Out Week challenge in the Challenges tab!");
+      return nl(parts);
     }
 
-    /* ── LOANS / EMI ── */
-    if (/loan|emi|debt|borrow|repay|bank/.test(q)) {
-      if (loans.length===0) return "No loans recorded yet. Add them in the 🏦 Loans tab to track EMIs and see their impact on your monthly balance.";
-      const emiPct = totalInc>0 ? Math.round((totalEMI/totalInc)*100) : 0;
-      const status = emiPct<=30 ? "✅ Healthy (under 30%)" : emiPct<=40 ? "⚠️ High (30-40%)" : "🔴 Very High (above 40%)";
-      const lines  = ["🏦 Loan Analysis\n"];
-      lines.push("Active loans: " + loans.length);
-      lines.push("Total monthly EMI: " + fmtINR(totalEMI) + " (" + emiPct + "% of income)");
-      lines.push("EMI burden: " + status);
-      lines.push("\nLoan breakdown:");
-      loans.forEach(l => lines.push("• " + l.bankName + " " + l.loanType + ": " + fmtINR(l.emi) + "/month"));
-      if (emiPct>30) {
-        lines.push("\n💡 Priority order for prepayment: Personal Loan > Gold Loan > Car Loan > Home Loan");
-        lines.push("Even ₹5,000 extra/month on a personal loan significantly reduces total interest.");
-      } else {
-        lines.push("\n✅ Your EMI burden is manageable. Pay on time to maintain a good credit score.");
+    if (intent === "loans") {
+      if (loans.length===0) return "No loans recorded. Add them in the Loans tab to track EMIs. Rule: Total EMIs should be below 30-35% of income. Above that you are financially stressed.";
+      const parts = [];
+      parts.push("Loan Analysis");
+      parts.push("");
+      parts.push("Active loans: " + loans.length);
+      parts.push("Total EMI:    " + fmtINR(totalEMI) + " (" + emiPct + "% of income)");
+      parts.push("EMI health:   " + (emiPct<=30 ? "Healthy — under 30%" : emiPct<=40 ? "High — 30-40%, watch this" : "Very High — above 40%, action needed!"));
+      parts.push("");
+      parts.push("Your loans:");
+      loans.forEach(l => parts.push("- " + l.bankName + " " + l.loanType + ": " + fmtINR(l.emi) + "/month" + (l.interestRate ? " at " + l.interestRate + "%" : "")));
+      parts.push("");
+      parts.push("Smart repayment (Avalanche Method):");
+      parts.push("Prepay highest-interest loan first:");
+      parts.push("Personal Loan (12-24%) > Gold Loan (10-15%) > Car Loan (8-12%) > Home Loan (8-10%)");
+      if (emiPct>35) {
+        parts.push("");
+        parts.push("Since your EMI burden is high:");
+        parts.push("1. No new loans until one is fully closed");
+        parts.push("2. Any surplus goes to prepay highest-interest loan");
+        parts.push("3. Avoid credit card debt — it charges 36-42% annual interest!");
       }
-      return lines.join("\n");
+      return nl(parts);
     }
 
-    /* ── GOALS ── */
-    if (/goal|target|dream|achieve|milestone|saving for/.test(q)) {
-      if (goals.length===0) return "No savings goals yet! Go to the 🎯 Goals tab and add goals like:\n• Emergency Fund\n• Vacation\n• New phone or laptop\n• Down payment\n\nEvery contribution is tracked automatically and deducted from your monthly balance.";
-      const lines = ["🎯 Your Goals Summary\n"];
-      lines.push("Total: " + goals.length + " | Completed: " + completedGoals.length + " | In Progress: " + pendingGoals.length + "\n");
+    if (intent === "goals") {
+      if (goals.length===0) return "No savings goals set. Go to the Goals tab and create goals like Emergency Fund, Vacation, Gadget, Car, or House Down Payment. Every contribution is tracked and deducted from your monthly balance automatically.";
+      const parts = [];
+      parts.push("Goals Summary");
+      parts.push("");
+      parts.push("Total: " + goals.length + "  |  Done: " + completedGoals.length + "  |  In Progress: " + pendingGoals.length);
+      parts.push("");
       goals.forEach(g => {
         const pct  = Math.min(100,Math.round((g.saved/g.target)*100));
-        const bar  = "█".repeat(Math.round(pct/10))+"░".repeat(10-Math.round(pct/10));
+        const bar  = "#".repeat(Math.round(pct/10)) + ".".repeat(10-Math.round(pct/10));
         const done = g.saved>=g.target;
-        lines.push((done?"✅ ":"🎯 ") + g.label);
-        lines.push("   " + fmtINR(g.saved) + " / " + fmtINR(g.target) + " ["+bar+"] "+pct+"%");
+        parts.push((done?"DONE: ":"Goal: ") + g.label);
+        parts.push("  " + fmtINR(g.saved) + " / " + fmtINR(g.target) + "  [" + bar + "]  " + pct + "%");
         if (g.deadline && !done) {
           const days = Math.ceil((new Date(g.deadline)-new Date())/864e5);
-          lines.push("   " + (days<0?"⏰ Overdue!":days<=30?"⚠️ Due in "+days+" days":"📅 "+days+" days left"));
+          const req  = days>0 ? Math.ceil((g.target-g.saved)/(days/30)) : 0;
+          parts.push("  " + (days<0 ? "Deadline passed!" : days<=30 ? "Due in " + days + " days — need " + fmtINR(req) + "/month" : Math.ceil(days/30) + " months left — need " + fmtINR(req) + "/month"));
         }
       });
-      if (nearDeadline.length>0) lines.push("\n⚡ Urgent: " + nearDeadline.map(g=>g.label).join(", ") + " due within 90 days!");
-      lines.push("\n💡 Use the Contribute button on each goal to add money — it automatically records as an expense.");
-      return lines.join("\n");
+      if (nearDeadline.length>0) {
+        parts.push("");
+        parts.push("Urgent: " + nearDeadline.map(g=>g.label).join(", ") + " due within 90 days!");
+      }
+      parts.push("");
+      parts.push("Use the Contribute button on each goal — it records the amount as a savings expense automatically.");
+      return nl(parts);
     }
 
-    /* ── HEALTH / SCORE ── */
-    if (/health|score|performance|doing|overall|summary|report/.test(q)) {
-      const grade  = savePct>=20?"A":savePct>=15?"B+":savePct>=10?"B":"C";
-      const issues = [];
-      if (savePct<10)              issues.push("📈 Boost savings rate from "+savePct+"% to at least 20%");
-      if (totalEMI>totalInc*0.35)  issues.push("🏦 EMI burden is "+Math.round(totalEMI/totalInc*100)+"% — try to keep under 30%");
-      if (topCat&&topCat.spent>totalInc*0.35) issues.push("💸 "+topCat.label+" ("+fmtINR(topCat.spent)+") needs a budget limit");
-      if (!emergencyGoal)          issues.push("🛡️ Set up an Emergency Fund goal");
-      if (pendingGoals.length===0 && goals.length===0) issues.push("🎯 Create savings goals to build wealth");
-      const lines = ["📊 Financial Health Report — " + month + "\n"];
-      lines.push("Grade: "+grade+" | Savings Rate: "+savePct+"% | Spent: "+spentPct+"% of income");
-      lines.push("Income: "+fmtINR(totalInc)+" | Expenses: "+fmtINR(totalExp)+" | Remaining: "+fmtINR(remaining));
-      if (momDelta!==null) lines.push("vs Last Month: "+(momDelta>0?"+":"")+momDelta+"%");
-      if (issues.length>0) {
-        lines.push("\nAreas to improve:");
-        issues.forEach(i=>lines.push(i));
+    if (intent === "health") {
+      if (!hasData) return noData;
+      const score = Math.max(0,Math.min(100,(savePct>=20?35:savePct>=10?20:5)+(emiPct<=30?25:emiPct<=40?15:5)+(goals.length>0?completedGoals.length>0?20:12:0)+(topCat&&topCat.spent<totalInc*0.35?20:10)));
+      const grade = score>=80?"A+":score>=70?"A":score>=60?"B+":score>=50?"B":score>=40?"C":"D";
+      const parts = [];
+      parts.push("Financial Health Report — " + month);
+      parts.push("");
+      parts.push("Grade: " + grade + "  (" + score + "/100)");
+      parts.push("Income: " + fmtINR(totalInc) + "  |  Expenses: " + fmtINR(totalExp) + "  |  Remaining: " + fmtINR(remaining));
+      parts.push("Savings Rate: " + savePct + "% " + (savePct>=20 ? "— Excellent!" : savePct>=10 ? "— Can improve" : "— Needs attention"));
+      parts.push("EMI Burden:   " + emiPct + "% " + (emiPct<=30 ? "— Healthy" : emiPct<=40 ? "— High" : "— Very High!"));
+      if (momDelta!==null) parts.push("vs Last Month: " + (momDelta>0 ? "Spent " + momDelta + "% more" : "Spent " + Math.abs(momDelta) + "% less — well done!"));
+      const actions = [];
+      if (savePct<20) actions.push("Increase savings to " + fmtINR(Math.round(totalInc*0.20)) + "/month (now: " + fmtINR(savingsAmt) + ")");
+      if (emiPct>35) actions.push("EMI burden is high — prepay highest-interest loan first");
+      if (!emergencyGoal) actions.push("Create Emergency Fund goal (target: " + fmtINR(Math.round(totalExp*6)) + ")");
+      if (topCat && topCat.spent>totalInc*0.35) actions.push("Set a budget for " + topCat.label + " in the Dashboard");
+      if (actions.length>0) {
+        parts.push("");
+        parts.push("Top improvements:");
+        actions.forEach((a,i) => parts.push((i+1) + ". " + a));
       } else {
-        lines.push("\n🌟 You're in excellent financial shape! Keep it up.");
+        parts.push("");
+        parts.push("You are in great shape! Focus on growing your investments now.");
       }
-      lines.push("\n💡 Check the Insights tab for detailed charts and month-over-month comparisons.");
-      return lines.join("\n");
+      return nl(parts);
     }
 
-    /* ── INVEST ── */
-    if (/invest|sip|mutual fund|stock|equity|nifty|sensex|return/.test(q)) {
-      const surplus = Math.max(0, remaining);
-      const lines = ["📈 Investment Guidance\n"];
-      if (surplus>0) lines.push("Available to invest: " + fmtINR(surplus) + "/month\n");
-      lines.push("Recommended beginner approach:");
-      lines.push("1. Build Emergency Fund first (" + fmtINR(Math.round(totalExp*6)) + " target)");
-      lines.push("2. Start SIP in Nifty 50 Index Fund — even ₹1,000/month");
-      lines.push("3. Increase SIP by 10% every year\n");
-      lines.push("Quick maths:");
-      lines.push("₹3,000/month SIP × 15 years @ 12% = ~₹30 Lakhs");
-      lines.push("₹5,000/month SIP × 15 years @ 12% = ~₹50 Lakhs");
-      lines.push("₹10,000/month SIP × 15 years @ 12% = ~₹1 Crore\n");
-      lines.push("⚠️ This is general guidance. Consult a SEBI-registered advisor for personalised plans.");
-      return lines.join("\n");
+    if (intent === "invest") {
+      const surplus = Math.max(0,remaining);
+      const parts = [];
+      parts.push("Investment Guide for Indians");
+      parts.push("");
+      if (hasData && surplus>0) {
+        parts.push("You have " + fmtINR(surplus) + " available to invest this month.");
+        parts.push("");
+      }
+      parts.push("The investment ladder — follow in order:");
+      parts.push("");
+      parts.push("Step 1: Emergency Fund (before investing anything!)");
+      parts.push("  Target: " + fmtINR(hasData?Math.round(totalExp*6):300000) + " in a liquid mutual fund");
+      parts.push("");
+      parts.push("Step 2: Tax-saving under 80C (limit Rs 1.5L/year)");
+      parts.push("  Best option: ELSS Mutual Fund (3-year lock-in + equity returns)");
+      parts.push("  Also: PPF (safe, 7.1% tax-free), EPF (if salaried)");
+      parts.push("");
+      parts.push("Step 3: Long-term equity SIPs");
+      parts.push("  Best for beginners: Nifty 50 Index Fund");
+      parts.push("  Start with Rs 500/month — increase 10% every year");
+      parts.push("");
+      parts.push("Step 4: NPS for extra tax saving (Rs 50,000 under 80CCD)");
+      parts.push("");
+      parts.push("SIP returns at 12% CAGR:");
+      parts.push("  Rs 3,000/month x 15 years = approx Rs 30 Lakhs");
+      parts.push("  Rs 5,000/month x 15 years = approx Rs 50 Lakhs");
+      parts.push("  Rs 10,000/month x 15 years = approx Rs 1 Crore");
+      parts.push("");
+      parts.push("Key principle: Start small, start NOW. Time in market beats timing the market.");
+      parts.push("");
+      parts.push("Note: This is educational guidance. For personalised plans, consult a SEBI-registered advisor.");
+      return nl(parts);
     }
 
-    /* ── SUBSCRIPTIONS ── */
-    if (/subscription|netflix|ott|spotify|cancel|streaming/.test(q)) {
-      const lines = ["🔄 Subscription Audit\n"];
+    if (intent === "tax") {
+      const parts = [];
+      parts.push("Tax Saving Guide — India");
+      parts.push("");
+      parts.push("Section 80C (limit: Rs 1,50,000/year)");
+      parts.push("  - ELSS Mutual Funds (best — 3yr lock-in + equity returns)");
+      parts.push("  - PPF (safe — 7.1%, 15yr, tax-free returns)");
+      parts.push("  - EPF contributions (automatic if salaried)");
+      parts.push("  - Life insurance premium");
+      parts.push("  - Home loan principal repayment");
+      parts.push("  - Children tuition fees");
+      parts.push("");
+      parts.push("Section 80D — Health Insurance");
+      parts.push("  - Self + family: up to Rs 25,000");
+      parts.push("  - Senior citizen parents: additional Rs 50,000");
+      parts.push("");
+      parts.push("HRA — House Rent Allowance");
+      parts.push("  - Salaried employees can claim HRA exemption");
+      parts.push("  - Keep rent receipts if monthly rent > Rs 8,333");
+      parts.push("");
+      parts.push("NPS — Additional Rs 50,000 under 80CCD(1B) over and above 80C");
+      parts.push("");
+      parts.push("New vs Old Tax Regime:");
+      parts.push("  - Old regime: Better if total deductions > Rs 3.75 Lakhs");
+      parts.push("  - New regime: Better for lower deductions, simpler calculation");
+      parts.push("");
+      parts.push("File ITR before July 31 to avoid penalties!");
+      return nl(parts);
+    }
+
+    if (intent === "subscriptions") {
+      const parts = [];
+      parts.push("Subscription Audit Guide");
+      parts.push("");
       if (subAmt>0) {
-        lines.push("Current spend: " + fmtINR(subAmt) + "/month = " + fmtINR(subAmt*12) + "/year");
-        lines.push("That's " + Math.round((subAmt/totalInc)*100) + "% of your income on subscriptions.\n");
+        parts.push("You spend " + fmtINR(subAmt) + "/month = " + fmtINR(subAmt*12) + "/year on subscriptions.");
+        parts.push("");
       }
-      lines.push("How to audit:");
-      lines.push("1. List every subscription with cost");
-      lines.push("2. Check last login date for each");
-      lines.push("3. Cancel anything unused in 30 days");
-      lines.push("4. Switch to annual plans (saves 20–40%)");
-      lines.push("5. Share family plans where possible\n");
-      lines.push("💡 Try the Subscription Slayer challenge in the 🏆 Challenges tab!");
-      return lines.join("\n");
+      parts.push("How to audit (takes 10 minutes):");
+      parts.push("1. List every subscription — check bank/UPI statements");
+      parts.push("2. Ask: Did I use this in the last 30 days?");
+      parts.push("3. Cancel every No answer immediately");
+      parts.push("4. Switch to annual plans for services you keep (saves 20-40%)");
+      parts.push("5. Share family plans — Netflix/Spotify allow multiple profiles");
+      parts.push("");
+      parts.push("Common ones to review: Netflix, Amazon Prime, Hotstar, Spotify,");
+      parts.push("YouTube Premium, gym membership, cloud storage plans");
+      parts.push("");
+      parts.push("Try the Subscription Slayer challenge in the Challenges tab!");
+      return nl(parts);
     }
 
-    /* ── CHALLENGE / TIPS ── */
-    if (/tip|trick|challeng|advice|improve|better|habit/.test(q)) {
-      const lines = ["💡 Top Financial Tips for " + month + "\n"];
-      lines.push("1. 50/30/20 Rule — Needs ≤50% · Wants ≤30% · Savings ≥20%");
-      lines.push("2. Pay yourself first — save before you spend");
-      lines.push("3. 24-hour rule — wait a day before any ₹500+ purchase");
-      lines.push("4. Track every rupee — log expenses daily in the Dashboard");
-      lines.push("5. Review weekly — 5 mins every Sunday checking your heatmap");
-      lines.push("6. Automate savings — set a standing instruction on salary day");
-      lines.push("7. Challenge yourself — try a No-Spend week this month\n");
-      lines.push("What I can help you with:");
-      lines.push("• 'How can I save more?' → Personalised savings plan");
-      lines.push("• 'Where am I overspending?' → Category breakdown");
-      lines.push("• 'Review my goals' → Goal progress analysis");
-      lines.push("• 'How are my loans?' → EMI health check");
-      lines.push("• 'What is my financial health?' → Full report");
-      lines.push("• 'How to invest?' → Beginner investment guide");
-      return lines.join("\n");
-    }
-
-    /* ── INCOME ── */
-    if (/income|salary|earn|revenue|source/.test(q)) {
-      const lines = ["💵 Income Analysis — " + month + "\n"];
+    if (intent === "income") {
       const srcs = curMonth.incomeSources;
-      if (srcs.length===0) return "No income recorded for "+month+". Go to Dashboard → + Add Income to add your salary and other sources.";
-      lines.push("Total income: " + fmtINR(totalInc));
-      lines.push("Sources: " + srcs.length + "\n");
-      srcs.forEach(s => lines.push("💼 " + s.label + ": " + fmtINR(s.amount)));
-      lines.push("\nIncome allocation:");
-      lines.push("→ Expenses: " + fmtINR(totalExp) + " (" + spentPct + "%)");
-      lines.push("→ EMI: " + fmtINR(totalEMI));
-      lines.push("→ Remaining: " + fmtINR(remaining) + " (" + savePct + "%)");
-      if (momDelta!==null&&prevData) {
-        const prevInc = prevData.incomeSources?.reduce((s,x)=>s+x.amount,0)||0;
-        if (prevInc>0) lines.push("\nvs Last Month: " + (totalInc>=prevInc?"📈 Up "+fmtINR(totalInc-prevInc):"📉 Down "+fmtINR(prevInc-totalInc)));
+      if (srcs.length===0) return "No income recorded for " + month + ". Go to Dashboard and click Add Income to add your salary and other sources.";
+      const parts = [];
+      parts.push("Income Analysis — " + month);
+      parts.push("");
+      parts.push("Total: " + fmtINR(totalInc) + " from " + srcs.length + " source(s)");
+      srcs.forEach(s => parts.push("  - " + s.label + ": " + fmtINR(s.amount)));
+      parts.push("");
+      parts.push("Allocation:");
+      parts.push("  Expenses:  " + fmtINR(totalExp) + " (" + spentPct + "%)");
+      if (totalEMI>0) parts.push("  EMIs:      " + fmtINR(totalEMI) + " (" + emiPct + "%)");
+      parts.push("  Remaining: " + fmtINR(remaining) + " (" + savePct + "%)");
+      parts.push("");
+      parts.push("Ways to grow your income:");
+      parts.push("- Ask for appraisal — most companies expect it annually");
+      parts.push("- Freelance or consult in your field on weekends");
+      parts.push("- Monetise a skill: tutoring, music, coding, writing");
+      parts.push("- Invest consistently — your money earns money while you sleep");
+      return nl(parts);
+    }
+
+    if (intent === "transport") {
+      const parts = [];
+      parts.push("Transport Spending — " + month);
+      parts.push("");
+      if (transAmt>0) {
+        const ideal = Math.round(totalInc*0.10);
+        parts.push("You spent: " + fmtINR(transAmt) + "  |  Ideal (10%): " + fmtINR(ideal));
+        parts.push(transAmt>ideal ? "Over by " + fmtINR(transAmt-ideal) + " — let us fix this." : "Within target — good!");
+        parts.push("");
       }
-      return lines.join("\n");
+      parts.push("Tips to reduce transport costs:");
+      parts.push("- Metro + auto is 40-60% cheaper than Ola/Uber daily");
+      parts.push("- Carpool with colleagues to split fuel and toll");
+      parts.push("- Work from home 2 days a week if possible");
+      parts.push("- Monthly metro/bus pass is cheaper than per-trip cost");
+      parts.push("- Keep tyres inflated — bad pressure reduces mileage 10%");
+      parts.push("");
+      parts.push("Try the Green Commute Week challenge in the Challenges tab!");
+      return nl(parts);
     }
 
-    /* ── GREETING ── */
-    if (/^(hi|hello|hey|namaste|helo|hii)/.test(q)) {
-      return "👋 Namaste! I'm your Vatsu AI Advisor.\n\nI can see your " + month + " data:\n• Income: " + fmtINR(totalInc) + "\n• Spent: " + fmtINR(totalExp) + " (" + spentPct + "%)\n• Remaining: " + fmtINR(remaining) + "\n• Savings Rate: " + savePct + "%\n\nAsk me anything:\n• How can I save more?\n• Where am I overspending?\n• Review my goals\n• How are my loans?\n• What is my financial health?";
+    if (intent === "shopping") {
+      const parts = [];
+      parts.push("Shopping Spending — " + month);
+      parts.push("");
+      if (shopAmt>0) {
+        const ideal = Math.round(totalInc*0.10);
+        parts.push("You spent: " + fmtINR(shopAmt) + "  |  Ideal (10%): " + fmtINR(ideal));
+        parts.push(shopAmt>ideal ? "Over by " + fmtINR(shopAmt-ideal) : "Within target — well done!");
+        parts.push("");
+      }
+      parts.push("Tips to control shopping:");
+      parts.push("- 24-hour rule: Wait a day before any purchase above Rs 500");
+      parts.push("- Uninstall shopping apps from home screen");
+      parts.push("- Unsubscribe from all promotional emails");
+      parts.push("- Keep a wishlist — if still wanted in 30 days, then buy");
+      parts.push("- Ask: Am I buying because I need it or because it is on sale?");
+      parts.push("");
+      parts.push("Try the Zero Impulse Month challenge in the Challenges tab!");
+      return nl(parts);
     }
 
-    /* ── DEFAULT CATCH-ALL ── */
-    return "I analysed your " + month + " finances:\n• Income: " + fmtINR(totalInc) + "\n• Spent: " + fmtINR(totalExp) + " (" + spentPct + "%)\n• Remaining: " + fmtINR(remaining) + "\n• Savings Rate: " + savePct + "%\n" + (topCat?"• Top expense: "+topCat.icon+" "+topCat.label+" ("+fmtINR(topCat.spent)+")\n":"") + "\nTry asking:\n• How can I save more?\n• Where am I overspending?\n• What is my financial health?\n• Review my goals\n• How are my loans?\n• Emergency fund advice\n• Investment tips";
+    if (intent === "terms") {
+      const t = question.toLowerCase();
+      if (t.includes("sip")) return nl(["SIP — Systematic Investment Plan","","A way to invest a fixed amount in mutual funds every month — like an EMI but for building wealth instead of repaying debt.","","Even Rs 500/month in a Nifty 50 index fund, started at age 25, grows to Rs 1.7 Crore by age 60 at 12% CAGR.","","Benefits: Rupee cost averaging, no need to time the market, disciplined saving, starts from Rs 100/month."]);
+      if (t.includes("cagr")) return nl(["CAGR — Compound Annual Growth Rate","","The average annual return rate of an investment. If Rs 1 lakh grew to Rs 2 lakh in 6 years, CAGR = 12.25%.","","It is the most honest way to compare investments. FD gives 7% CAGR. Good equity fund gives 12-15% CAGR over 10+ years."]);
+      if (t.includes("elss")) return nl(["ELSS — Equity Linked Savings Scheme","","A mutual fund that saves tax under Section 80C (up to Rs 1.5L/year) with only 3-year lock-in.","","Usually the BEST 80C option because you get equity market returns (12-15% historically) alongside tax saving.","","How to start: Any mutual fund app (Zerodha, Groww, Kuvera) — search ELSS and start SIP."]);
+      if (t.includes("ppf")) return nl(["PPF — Public Provident Fund","","Government-backed savings with 7.1% guaranteed, completely tax-free returns. 15-year lock-in but very safe.","","Contributions up to Rs 1.5L/year qualify for 80C deduction. Interest and maturity are both tax-free.","","Best for: Conservative investors, long-term safety, guaranteed returns without market risk."]);
+      if (t.includes("nps")) return nl(["NPS — National Pension System","","A government pension scheme with extra Rs 50,000 tax deduction under 80CCD(1B) — beyond the Rs 1.5L 80C limit.","","Your money is invested in equity, government bonds, and corporate bonds. Returns are market-linked.","","Drawback: Locked till age 60. At retirement, 40% must be used for annuity (pension)."]);
+      if (t.includes("cibil") || t.includes("credit score")) return nl(["Credit Score / CIBIL Score","","Ranges from 300 to 900. Above 750 = excellent. Below 650 = loan rejections likely.","","What affects it:","- Payment history (35%) — pay EMIs on time, always","- Credit utilisation (30%) — keep below 30% of card limit","- Credit history length (15%) — keep old cards active","- New credit inquiries (10%) — do not apply for too many loans","","Check free once a year on CIBIL website or apps like CRED/Paytm."]);
+      if (t.includes("inflation")) return nl(["Inflation — The Silent Wealth Destroyer","","At 6% inflation: Rs 1 lakh today = Rs 74,000 in 5 years = Rs 42,000 in 15 years in real value.","","What this means for your money:","- Savings account (4%) LOSES value vs 6% inflation","- FD (7%) barely keeps up after paying tax on interest","- Equity mutual funds (12-15% historically) actually BEAT inflation","","Solution: Never keep long-term savings in just a savings account. Invest in equity SIPs."]);
+      if (t.includes("compound")) return nl(["Compound Interest — The 8th Wonder of the World","","Earning interest on your interest. The longer you wait, the more powerful it gets.","","Example: Rs 1 lakh at 12% per year","- After 5 years:  Rs 1.76 lakh","- After 10 years: Rs 3.11 lakh","- After 20 years: Rs 9.65 lakh","- After 30 years: Rs 29.96 lakh","","The lesson: Start investing as early as possible, even small amounts."]);
+      if (t.includes("nav")) return nl(["NAV — Net Asset Value","","The price of one unit of a mutual fund, calculated daily.","","A lower NAV does NOT mean the fund is cheaper or better. What matters is the fund's quality and future returns, not the current NAV.","","Think of it like a stock price — the history and growth rate matter, not the absolute number."]);
+      if (t.includes("liquid fund")) return nl(["Liquid Mutual Fund","","A mutual fund that invests in very short-term instruments. Can be redeemed within 1 business day.","","Returns: 6-7% — much better than savings account (4%)","Ideal for: Emergency fund, money you need in 1-12 months","","Popular ones: Nippon India Liquid Fund, HDFC Liquid Fund, SBI Liquid Fund"]);
+      if (t.includes("net worth")) return nl(["Net Worth — Your Real Financial Score","","Net Worth = Total Assets - Total Liabilities","","Assets: Cash, FDs, investments, property value, gold, EPF/PPF balance","Liabilities: All outstanding loan balances","","Why it matters: Salary shows how much you earn. Net worth shows how much you have built. Focus on growing net worth, not just income.","",(hasData&&loans.length>0?"Your current loan liabilities: " + fmtINR(loans.reduce((s,l)=>s+l.principal,0)):"")]);
+      return nl(["I can explain many Indian finance terms.","","Ask about any of these:","- SIP, ELSS, PPF, NPS (investing and tax saving)","- CAGR, XIRR, NAV (understanding returns)","- CIBIL / Credit Score (loan eligibility)","- Inflation, Compound Interest (money concepts)","- Liquid Fund, FD, RD (where to keep savings)","- Net Worth (measuring financial progress)"]);
+    }
+
+    if (intent === "motivation") {
+      const options = [
+        nl(["Financial stress is completely normal — and the fact that you are tracking your finances already puts you ahead of most people.","","Small steps beat perfect plans. Even saving Rs 500 more this month than last month is real progress.","","One thing to remember: You are not broke. You are pre-wealthy. Every rupee you invest today is working silently for you 24/7.","","What one small action can you take today? Even setting up a Rs 500 SIP counts."] ),
+        nl(["Every person who built wealth started somewhere — often from a worse position than you are in now.","","The formula is simple: Earn more than you spend. Save consistently. Invest patiently. Repeat.","","The hardest part is not the math — it is the discipline. And you are already showing that discipline by being here.","","Focus on what you can control: your spending choices, your savings habit, your financial knowledge. The results will follow."]),
+        nl(["Money anxiety is one of the most common forms of stress. You are not alone.","","The most powerful thing you can do right now: Do not run away from the numbers. Face them. The awareness itself starts to change things.","","Your income is not the problem. The gap between income and savings is what we need to close — and I am here to help you do that step by step.","","What is worrying you most right now? Tell me and we will work through it together."])
+      ];
+      return options[Math.floor(Math.random()*options.length)];
+    }
+
+    if (intent === "tips") {
+      const parts = [];
+      parts.push("10 Habits of Financially Healthy Indians");
+      parts.push("");
+      parts.push("1.  Pay yourself first — save before you spend, not after");
+      parts.push("2.  Follow 50/30/20 — needs, wants, savings every month");
+      parts.push("3.  Emergency fund first — 6 months expenses before investing");
+      parts.push("4.  Invest early — Rs 3,000/month from 25 beats Rs 6,000 from 35");
+      parts.push("5.  Avoid lifestyle inflation — raises should increase savings not spending");
+      parts.push("6.  24-hour rule — wait before any purchase above Rs 500");
+      parts.push("7.  Track everything — what gets measured gets managed");
+      parts.push("8.  Keep EMIs below 30% of income");
+      parts.push("9.  Review finances every Sunday — 10 minutes is enough");
+      parts.push("10. Increase SIP by 10% automatically every year");
+      if (hasData) {
+        parts.push("");
+        parts.push("For you right now, the most impactful habit is:");
+        if (savePct<20) parts.push("Automate saving " + fmtINR(Math.round(totalInc*0.20)) + " on salary day");
+        else if (!emergencyGoal) parts.push("Build your emergency fund — target " + fmtINR(Math.round(totalExp*6)));
+        else parts.push("Start or increase your SIP investment this month");
+      }
+      return nl(parts);
+    }
+
+    if (intent === "networth") {
+      const parts = [];
+      parts.push("Net Worth Calculator");
+      parts.push("");
+      parts.push("Net Worth = Total Assets - Total Liabilities");
+      parts.push("");
+      parts.push("Your liabilities in Vatsu:");
+      if (loans.length>0) {
+        loans.forEach(l => parts.push("  - " + l.bankName + " " + l.loanType + ": " + fmtINR(l.principal)));
+        parts.push("  Total loans: " + fmtINR(loans.reduce((s,l)=>s+l.principal,0)));
+      } else {
+        parts.push("  No loans — great position to start building net worth!");
+      }
+      parts.push("");
+      parts.push("Track your assets in the Goals tab:");
+      parts.push("  - Emergency fund, FDs, savings");
+      parts.push("  - Mutual fund / stock portfolio");
+      parts.push("  - EPF and PPF balance");
+      parts.push("  - Gold value");
+      parts.push("  - Property value");
+      parts.push("");
+      parts.push("How to grow net worth:");
+      parts.push("1. Reduce liabilities — prepay high-interest loans");
+      parts.push("2. Grow assets — invest in equity SIPs consistently");
+      parts.push("3. Avoid depreciating purchases — cars lose 15-20% per year");
+      parts.push("4. Target: Net worth = 10-15x annual income at retirement");
+      return nl(parts);
+    }
+
+    if (intent === "insurance") {
+      const parts = [];
+      parts.push("Insurance Guide");
+      parts.push("");
+      parts.push("The 2 most important insurances:");
+      parts.push("");
+      parts.push("1. Term Life Insurance (if you have dependents)");
+      parts.push("   Cover: 10-15x your annual income");
+      parts.push("   Cost: Rs 8,000-15,000/year for Rs 1 Crore cover");
+      parts.push("   Buy as early as possible — premium is lower when young");
+      parts.push("   AVOID: ULIPs, endowment plans — high fees, poor returns");
+      parts.push("");
+      parts.push("2. Health Insurance (everyone needs this)");
+      parts.push("   Minimum cover: Rs 5-10 Lakhs for self, Rs 10-15L for family");
+      parts.push("   Cost: Rs 8,000-20,000/year for decent family cover");
+      parts.push("   Tax benefit: Up to Rs 25,000 under Section 80D");
+      parts.push("   Even if employer gives cover — buy personal policy too");
+      parts.push("   (You lose employer cover if you change jobs)");
+      parts.push("");
+      parts.push("Rule: Insurance is NOT an investment.");
+      parts.push("Buy term + health. Invest the rest in mutual funds.");
+      return nl(parts);
+    }
+
+    if (intent === "realestate") {
+      const parts = [];
+      parts.push("Rent vs Buy — Indian Real Estate Guide");
+      parts.push("");
+      parts.push("Buy a home if:");
+      parts.push("- You plan to stay 7+ years in the same city");
+      parts.push("- EMI is not more than 40% of income");
+      parts.push("- You have 20% down payment ready (no loan for down payment)");
+      parts.push("- Property price is below 300x monthly rent");
+      parts.push("");
+      parts.push("Keep renting if:");
+      parts.push("- You may relocate within 5 years");
+      parts.push("- EMI would exceed 40% of your income");
+      parts.push("- Investing the down payment in equity gives better returns");
+      parts.push("");
+      parts.push("Home loan tax benefits:");
+      parts.push("- Principal repayment: Rs 1.5L under 80C");
+      parts.push("- Interest paid: Up to Rs 2L under Section 24B");
+      parts.push("");
+      parts.push("My honest advice: Do not buy because of family pressure or FOMO.");
+      parts.push("Buy when the financial numbers genuinely make sense for you.");
+      return nl(parts);
+    }
+
+    if (intent === "creditScore") {
+      const parts = [];
+      parts.push("CIBIL / Credit Score Guide");
+      parts.push("");
+      parts.push("Score ranges:");
+      parts.push("750-900: Excellent — best loan rates, easy approvals");
+      parts.push("700-750: Good — most loans at fair rates");
+      parts.push("650-700: Average — some rejections, higher interest");
+      parts.push("Below 650: Poor — most loans rejected");
+      parts.push("");
+      parts.push("How to build a great score:");
+      parts.push("1. Pay ALL EMIs and credit card bills on time — most important!");
+      parts.push("2. Keep credit card usage below 30% of limit");
+      parts.push("3. Do not apply for many loans or cards in short period");
+      parts.push("4. Keep old credit cards active — history length matters");
+      parts.push("");
+      parts.push("How to check: CIBIL website (free once/year) or CRED, Paytm, BankBazaar apps.");
+      parts.push("");
+      parts.push("A low score takes 6-12 months of consistent repayments to improve.");
+      return nl(parts);
+    }
+
+    /* ─── DEFAULT: friendly catch-all with real data ─── */
+    if (!hasData) return noData;
+    const parts2 = [];
+    parts2.push("I understood your question! Here is your current " + month + " status:");
+    parts2.push("");
+    parts2.push("Income: " + fmtINR(totalInc) + "  |  Spent: " + fmtINR(totalExp) + " (" + spentPct + "%)  |  Remaining: " + fmtINR(remaining));
+    parts2.push("Savings Rate: " + savePct + "% " + (savePct>=20?"— Great!":savePct>=10?"— Can improve":"— Needs work"));
+    if (topCat) parts2.push("Top expense: " + topCat.icon + " " + topCat.label + " (" + fmtINR(topCat.spent) + ")");
+    parts2.push("");
+    parts2.push("Topics I can help you with:");
+    parts2.push("- Savings plan and where to save");
+    parts2.push("- Spending breakdown and budget");
+    parts2.push("- Investment guide (SIP, ELSS, PPF, NPS)");
+    parts2.push("- Tax saving under 80C, HRA, NPS");
+    parts2.push("- Emergency fund setup");
+    parts2.push("- Loan and EMI strategy");
+    parts2.push("- Goal planning and tracking");
+    parts2.push("- Financial terms explained");
+    parts2.push("- Motivation and financial habits");
+    parts2.push("");
+    parts2.push("Just ask me anything — in plain English or Hinglish!");
+    return nl(parts2);
+  }
+
+  function analyse(question) {
+    const intent = detectIntent(question);
+    return respond(intent, question);
   }
 
   function send() {
     const q = input.trim();
     if (!q || loading) return;
-    const userMsg = { role:"user", content:q };
-    setMsgs(p => [...p, userMsg]);
+    setMsgs(p => [...p, { role:"user", content:q }]);
     setInput("");
     setLoading(true);
     setTimeout(() => {
-      const reply = analyse(q);
-      setMsgs(p => [...p, { role:"assistant", content:reply }]);
+      setMsgs(p => [...p, { role:"assistant", content:analyse(q) }]);
       setLoading(false);
-    }, 500);
+    }, 400);
   }
 
-  const quickQ = ["How can I save more?","Where am I overspending?","What is my financial health?","Emergency fund advice","Review my goals","How are my loans?","Investment tips","Food spending tips"];
+  const quickQ = ["How can I save more?","Where is my money going?","Best investments for me","Tax saving tips","Emergency fund guide","My financial health","Explain SIP","Reduce food costs","Loan strategy","Motivate me!"];
 
   function MsgText({ text, isUser }) {
-    if (isUser) return <span style={{fontSize:13,fontFamily:BODY,fontWeight:600}}>{text}</span>;
+    if (isUser) return <span style={{ fontSize:13, fontFamily:BODY, fontWeight:600 }}>{text}</span>;
     return (
-      <div style={{fontSize:13,fontFamily:BODY,lineHeight:1.75}}>
-        {text.split("\n").map((line,i) => {
-          if (!line.trim()) return <div key={i} style={{height:5}}/>;
-          const parts = line.split(/(\*\*[^*]+\*\*)/g).map((p,j) =>
-            p.startsWith("**")&&p.endsWith("**")
-              ? <strong key={j} style={{color:T.textBright}}>{p.slice(2,-2)}</strong>
-              : p
-          );
-          return <div key={i} style={{marginBottom:3}}>{parts}</div>;
+      <div style={{ fontSize:13, fontFamily:BODY, lineHeight:1.8 }}>
+        {text.split("\n").map((line, i) => {
+          if (!line.trim()) return <div key={i} style={{ height:5 }} />;
+          return <div key={i} style={{ marginBottom:2 }}>{line}</div>;
         })}
       </div>
     );
   }
 
-  /* Welcome message shown before first send */
-  const showWelcome = msgs.length===0;
+  const showWelcome = msgs.length === 0;
 
   return (
-    <div style={{display:"flex",flexDirection:"column",height:560,background:T.cardGrad,border:"1px solid "+T.border,borderRadius:20,overflow:"hidden"}}>
-
-      {/* Header */}
-      <div style={{padding:"14px 18px",background:theme==="dark"?"linear-gradient(135deg,#060f1c,#04090f)":"linear-gradient(135deg,#0d2340,#1a3a62)",borderBottom:"1px solid "+T.border}}>
-        <div style={{display:"flex",alignItems:"center",gap:12}}>
-          <div style={{width:40,height:40,borderRadius:"50%",background:"linear-gradient(135deg,#1dd1a1,#0abf8a)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,boxShadow:"0 0 16px #1dd1a155",flexShrink:0}}>🤖</div>
-          <div style={{flex:1}}>
-            <div style={{fontWeight:700,color:"#f0f8ff",fontFamily:TF,fontSize:15}}>Vatsu AI Advisor</div>
-            <div style={{fontSize:11,color:"#1dd1a1",fontFamily:BODY,marginTop:1}}>Smart Finance Engine · Works Everywhere · 100% Free · No API needed</div>
+    <div style={{ display:"flex", flexDirection:"column", height:580, background:T.cardGrad, border:"1px solid "+T.border, borderRadius:20, overflow:"hidden" }}>
+      <div style={{ padding:"14px 18px", background:theme==="dark"?"linear-gradient(135deg,#060f1c,#04090f)":"linear-gradient(135deg,#0d2340,#1a3a62)", borderBottom:"1px solid "+T.border, flexShrink:0 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+          <div style={{ width:42, height:42, borderRadius:"50%", background:"linear-gradient(135deg,#1dd1a1,#0abf8a)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, boxShadow:"0 0 18px #1dd1a155", flexShrink:0 }}>🤖</div>
+          <div style={{ flex:1 }}>
+            <div style={{ fontWeight:700, color:"#f0f8ff", fontFamily:TF, fontSize:15 }}>Vatsu CA Advisor</div>
+            <div style={{ fontSize:11, color:"#1dd1a1", fontFamily:BODY, marginTop:1 }}>Smart Finance Engine — Works Everywhere — 100% Free — No Setup Needed</div>
           </div>
-          <div style={{padding:"4px 12px",borderRadius:20,background:"#1dd1a122",border:"1px solid #1dd1a144",fontSize:10,color:"#1dd1a1",fontFamily:BODY,fontWeight:700}}>LIVE</div>
+          <div style={{ padding:"4px 12px", borderRadius:20, background:"#1dd1a122", border:"1px solid #1dd1a155", fontSize:10, color:"#1dd1a1", fontFamily:BODY, fontWeight:700 }}>LIVE</div>
         </div>
       </div>
 
-      {/* Welcome screen */}
       {showWelcome && (
-        <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"24px 20px",gap:16}}>
-          <div style={{fontSize:48}}>🤖</div>
-          <div style={{textAlign:"center"}}>
-            <div style={{fontSize:17,fontWeight:800,color:T.textBright,fontFamily:TF,marginBottom:6}}>Your Personal Finance Advisor</div>
-            <div style={{fontSize:13,color:T.textSub,fontFamily:BODY,lineHeight:1.7,maxWidth:340}}>
-              I know your real financial data and give you instant, personalised advice — completely offline, no internet needed.
-            </div>
+        <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"20px", gap:14, overflowY:"auto" }}>
+          <div style={{ fontSize:44 }}>🤖</div>
+          <div style={{ textAlign:"center", maxWidth:340 }}>
+            <div style={{ fontSize:17, fontWeight:800, color:T.textBright, fontFamily:TF, marginBottom:6 }}>Namaste! I am your CA Advisor</div>
+            <div style={{ fontSize:13, color:T.textSub, fontFamily:BODY, lineHeight:1.7 }}>I know your real numbers and give personalised advice on savings, investments, tax, loans, goals and more. Works like talking to a friendly CA!</div>
           </div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,width:"100%",maxWidth:340}}>
-            {["💰 Savings plan","📊 Spending analysis","🎯 Goal review","🏦 Loan health","💡 Budget tips","📈 Investment basics"].map(chip=>(
-              <div key={chip} style={{padding:"8px 12px",background:T.surface3,border:"1px solid "+T.border,borderRadius:10,fontSize:12,color:T.textSub,fontFamily:BODY,textAlign:"center",cursor:"pointer"}}
-                onClick={()=>{ setInput(chip.replace(/^[^\s]+\s/,"")); }}>
-                {chip}
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, width:"100%", maxWidth:360 }}>
+            {[["Save more money","💰"],["Spending analysis","📊"],["Investment guide","📈"],["Tax saving tips","🏛️"],["Goal planning","🎯"],["Loan strategy","🏦"],["Financial terms","💡"],["Emergency fund","🛡️"]].map(([label, icon]) => (
+              <div key={label} onClick={() => setInput(label)} style={{ padding:"10px 12px", background:T.surface3, border:"1px solid "+T.border, borderRadius:12, fontSize:12, color:T.textSub, fontFamily:BODY, display:"flex", alignItems:"center", gap:8, cursor:"pointer" }}>
+                <span style={{ fontSize:18 }}>{icon}</span>{label}
               </div>
             ))}
           </div>
-          <div style={{fontSize:12,color:T.textMuted,fontFamily:BODY}}>Type a question or pick a topic above ↑</div>
+          <div style={{ fontSize:11, color:T.textMuted, fontFamily:BODY, textAlign:"center" }}>Or type any finance question below</div>
         </div>
       )}
 
-      {/* Messages */}
       {!showWelcome && (
-        <div style={{flex:1,overflowY:"auto",padding:"14px 16px",display:"flex",flexDirection:"column",gap:12}}>
-          {msgs.map((m,i) => (
-            <div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start",gap:8}}>
-              {m.role==="assistant"&&<div style={{width:28,height:28,borderRadius:"50%",background:"linear-gradient(135deg,#1dd1a1,#0abf8a)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,flexShrink:0,marginTop:2}}>🤖</div>}
-              <div style={{maxWidth:"82%",padding:"11px 14px",borderRadius:m.role==="user"?"18px 18px 4px 18px":"18px 18px 18px 4px",background:m.role==="user"?"linear-gradient(135deg,#1dd1a1,#0abf8a)":theme==="dark"?"linear-gradient(135deg,#0b1825,#071018)":"#f0f6ff",color:m.role==="user"?"#02080f":T.text,border:m.role==="assistant"?"1px solid "+T.border2:"none",boxShadow:m.role==="user"?"0 4px 14px #1dd1a133":"0 2px 8px #00000022"}}>
-                <MsgText text={m.content} isUser={m.role==="user"}/>
+        <div style={{ flex:1, overflowY:"auto", padding:"14px 16px", display:"flex", flexDirection:"column", gap:12 }}>
+          {msgs.map((m, i) => (
+            <div key={i} style={{ display:"flex", justifyContent:m.role==="user"?"flex-end":"flex-start", gap:8 }}>
+              {m.role==="assistant" && <div style={{ width:28, height:28, borderRadius:"50%", background:"linear-gradient(135deg,#1dd1a1,#0abf8a)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, flexShrink:0, marginTop:2 }}>🤖</div>}
+              <div style={{ maxWidth:"84%", padding:"12px 15px", borderRadius:m.role==="user"?"18px 18px 4px 18px":"18px 18px 18px 4px", background:m.role==="user"?"linear-gradient(135deg,#1dd1a1,#0abf8a)":theme==="dark"?"linear-gradient(135deg,#0b1825,#071018)":"#f0f6ff", color:m.role==="user"?"#02080f":T.text, border:m.role==="assistant"?"1px solid "+T.border2:"none", boxShadow:m.role==="user"?"0 4px 14px #1dd1a133":"0 2px 8px #00000018" }}>
+                <MsgText text={m.content} isUser={m.role==="user"} />
               </div>
             </div>
           ))}
-          {loading&&(
-            <div style={{display:"flex",alignItems:"center",gap:8}}>
-              <div style={{width:28,height:28,borderRadius:"50%",background:"linear-gradient(135deg,#1dd1a1,#0abf8a)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,flexShrink:0}}>🤖</div>
-              <div style={{display:"flex",gap:5,padding:"12px 16px",background:theme==="dark"?"#0b1825":"#f0f6ff",borderRadius:"18px 18px 18px 4px",border:"1px solid "+T.border2}}>
-                {[0,1,2].map(i=><div key={i} style={{width:8,height:8,borderRadius:"50%",background:"#1dd1a1",animation:"vPulse 1.2s "+(i*0.2)+"s infinite"}}/>)}
+          {loading && (
+            <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+              <div style={{ width:28, height:28, borderRadius:"50%", background:"linear-gradient(135deg,#1dd1a1,#0abf8a)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, flexShrink:0 }}>🤖</div>
+              <div style={{ display:"flex", gap:5, padding:"12px 16px", background:theme==="dark"?"#0b1825":"#f0f6ff", borderRadius:"18px 18px 18px 4px", border:"1px solid "+T.border2 }}>
+                {[0,1,2].map(ii => <div key={ii} style={{ width:8, height:8, borderRadius:"50%", background:"#1dd1a1", animation:"vPulse 1.2s "+(ii*0.2)+"s infinite" }} />)}
               </div>
             </div>
           )}
-          <div ref={bottom}/>
+          <div ref={bottom} />
         </div>
       )}
 
-      {/* Quick chips */}
-      <div style={{padding:"8px 14px 4px",display:"flex",gap:6,overflowX:"auto",borderTop:"1px solid "+T.border}}>
-        {quickQ.map(q=>(
-          <button key={q} onClick={()=>setInput(q)} style={{whiteSpace:"nowrap",padding:"5px 12px",borderRadius:18,border:"1px solid "+T.border,background:"transparent",color:T.textSub,fontSize:11,cursor:"pointer",fontFamily:BODY,transition:"all .15s"}}
-            onMouseEnter={e=>{e.target.style.borderColor="#1dd1a1";e.target.style.color="#1dd1a1";}}
-            onMouseLeave={e=>{e.target.style.borderColor=T.border;e.target.style.color=T.textSub;}}>
+      <div style={{ padding:"8px 14px 4px", display:"flex", gap:6, overflowX:"auto", borderTop:"1px solid "+T.border, flexShrink:0 }}>
+        {quickQ.map(q => (
+          <button key={q} onClick={() => setInput(q)} style={{ whiteSpace:"nowrap", padding:"5px 12px", borderRadius:18, border:"1px solid "+T.border, background:"transparent", color:T.textSub, fontSize:11, cursor:"pointer", fontFamily:BODY }}>
             {q}
           </button>
         ))}
       </div>
 
-      {/* Input */}
-      <div style={{padding:"10px 14px",borderTop:"1px solid "+T.border,display:"flex",gap:8}}>
-        <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&send()} placeholder="Ask anything about your finances..." style={{...IS2,flex:1,padding:"10px 14px"}}/>
-        <Btn v="primary" onClick={send} sx={{padding:"10px 18px",whiteSpace:"nowrap",opacity:loading?0.6:1}}>{loading?"...":"Ask"}</Btn>
+      <div style={{ padding:"10px 14px", borderTop:"1px solid "+T.border, display:"flex", gap:8, flexShrink:0 }}>
+        <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key==="Enter" && send()} placeholder="Ask anything about your finances..." style={{ ...IS2, flex:1, padding:"10px 14px" }} />
+        <Btn v="primary" onClick={send} sx={{ padding:"10px 20px", whiteSpace:"nowrap", opacity:loading?0.6:1 }}>Ask</Btn>
       </div>
-
     </div>
   );
 }
