@@ -343,26 +343,31 @@ const CHALL = [
     getP: cur => cur.expenses.filter(e => e.category === "food" && !e.recurringId).reduce((s,e) => s + e.amount, 0),
     isWin: p => p === 0,
     pct: p => p === 0 ? 100 : 0,
-    metric: p => p === 0 ? "No dining out — great!" : fmtINR(p) + " spent on dining",
+    metric: p => p === 0 ? "No dining out yet — great start!" : fmtINR(p) + " spent on dining (target: ₹0)",
   },
   { id:"rule50", label:"50% Rule Month", icon:"⚖️", color:"#54a0ff", diff:"Hard", xp:300, days:30,
     desc:"Keep total expenses under 50% of income for the month.",
     why:"The 50/30/20 rule is the gold standard. Needs < 50% = financial freedom.",
     tips:["Track every purchase","Identify top 3 non-essentials","Automate savings first"],
     badge:"⚖️ Balance Master",
-    getP: (cur, inc) => inc > 0 ? cur.expenses.reduce((s,e) => s + e.amount, 0) / inc * 100 : 0,
-    isWin: p => p <= 50,
-    pct: p => Math.min(100, 100 - Math.max(0, p - 50) * 2),
-    metric: (p, inc) => inc > 0 ? Math.round(p) + "% of income spent" : "Add income first",
+    getP: (cur, inc) => inc > 0 ? Math.round(cur.expenses.reduce((s,e) => s + e.amount, 0) / inc * 100) : 0,
+    isWin: (p, inc) => inc > 0 && p <= 50,
+    pct: (p, inc) => inc === 0 ? 0 : Math.min(100, Math.max(0, 100 - Math.max(0, p - 30))),
+    metric: (p, inc) => inc > 0 ? p + "% of income spent (target: ≤50%)" : "Add income to track",
   },
   { id:"sub_cut", label:"Subscription Slayer", icon:"✂️", color:"#00d2d3", diff:"Easy", xp:100, days:30,
-    desc:"Review all subscriptions. Cancel at least one unused service.",
-    why:"Average Indian pays for 4-6 subscriptions but uses only 2-3 actively.",
-    tips:["List every subscription","Check last login date","Negotiate annual plans"],
+    desc:"Review all subscriptions and cancel at least one unused service this month.",
+    why:"Average Indian pays for 4-6 subscriptions but actively uses only 2-3.",
+    tips:["List every subscription with cost","Check last login date for each","Cancel anything unused in 30 days"],
     badge:"✂️ Subscription Slayer",
     getP: cur => cur.expenses.filter(e => e.category === "subscriptions").reduce((s,e) => s + e.amount, 0),
-    isWin: () => true, pct: () => 100,
-    metric: p => fmtINR(p) + " on subscriptions this month",
+    isWin: (p, inc, joined) => {
+      // Win = user has manually marked it done via a challenge-specific flag
+      // For now: win if subscriptions reduced vs last month or zero subs recorded
+      return p === 0;
+    },
+    pct: p => p === 0 ? 100 : 50,
+    metric: p => p === 0 ? "No subscriptions logged — audit complete!" : fmtINR(p) + "/month on subscriptions — review these",
   },
   { id:"save10k", label:"Save ₹10,000 Sprint", icon:"🏆", color:"#1dd1a1", diff:"Hard", xp:400, days:30,
     desc:"Contribute ₹10,000 to any savings goal this month.",
@@ -371,26 +376,28 @@ const CHALL = [
     badge:"🏆 Savings Champion",
     getP: cur => cur.expenses.filter(e => e.category === "savings").reduce((s,e) => s + e.amount, 0),
     isWin: p => p >= 10000,
-    pct: p => Math.min(100, p / 10000 * 100),
-    metric: p => fmtINR(p) + " contributed to goals",
+    pct: p => Math.min(100, Math.round(p / 10000 * 100)),
+    metric: p => fmtINR(p) + " saved (target: " + fmtINR(10000) + ")",
   },
-  { id:"green_go", label:"Green Commute Week", icon:"🚲", color:"#1dd1a1", diff:"Medium", xp:200, days:7,
-    desc:"Halve your transport spending for 7 days. Walk, cycle, or carpool.",
-    why:"Cutting transport 50% for one week saves ₹500-₹3,000 depending on your city.",
-    tips:["Use metro/bus instead of cab","Combine errands into single trips","Try WFH days"],
+  { id:"green_go", label:"Green Commute Week", icon:"🚲", color:"#00b894", diff:"Medium", xp:200, days:7,
+    desc:"Keep transport spending under ₹500 for 7 days. Walk, cycle, or carpool.",
+    why:"Cutting transport costs for one week saves ₹500-₹3,000 depending on your city.",
+    tips:["Use metro/bus instead of cab","Combine errands into single trips","Try WFH days if possible"],
     badge:"🌱 Eco Commuter",
     getP: cur => cur.expenses.filter(e => e.category === "transport").reduce((s,e) => s + e.amount, 0),
-    isWin: () => true, pct: () => 100,
-    metric: p => fmtINR(p) + " on transport this week",
+    isWin: p => p <= 500,
+    pct: p => p === 0 ? 100 : Math.min(100, Math.max(0, Math.round((1 - p / 2000) * 100))),
+    metric: p => p <= 500 ? fmtINR(p) + " on transport — target met!" : fmtINR(p) + " on transport (target: ≤₹500)",
   },
   { id:"no_impulse", label:"Zero Impulse Month", icon:"🧘", color:"#cd84f1", diff:"Hard", xp:350, days:30,
-    desc:"Wait 24 hours before any purchase above ₹500.",
+    desc:"Keep shopping expenses under ₹1,000 this month by applying the 24-hour rule.",
     why:"Impulse purchases account for 40% of unplanned shopping. The 24-hour rule eliminates most.",
-    tips:["Remove saved cards from apps","Unsubscribe from promo emails","Use a wishlist system"],
+    tips:["Remove saved cards from shopping apps","Unsubscribe from promotional emails","Use a wishlist — buy only after 30 days"],
     badge:"🧘 Mindful Spender",
     getP: cur => cur.expenses.filter(e => e.category === "shopping").reduce((s,e) => s + e.amount, 0),
-    isWin: () => true, pct: () => 100,
-    metric: p => fmtINR(p) + " on shopping this month",
+    isWin: p => p <= 1000,
+    pct: p => p === 0 ? 100 : Math.min(100, Math.max(0, Math.round((1 - p / 5000) * 100))),
+    metric: p => p <= 1000 ? fmtINR(p) + " on shopping — impulse controlled!" : fmtINR(p) + " on shopping (target: ≤₹1,000)",
   },
 ];
 
@@ -530,6 +537,27 @@ export default function Vatsu() {
 
   const maxHist = useMemo(() => Math.max(...histMonths.map(h => Math.max(h.income, h.expenses)), 1), [histMonths]);
 
+  /* ── Overall Net Position (all-time, across every recorded month) ── */
+  const netPosition = useMemo(() => {
+    // Sum all-time income and expenses across every recorded month
+    const allTimeInc  = histMonths.reduce((s,h) => s + h.income,   0);
+    const allTimeExp  = histMonths.reduce((s,h) => s + h.expenses,  0);
+    // Outstanding loan principal still to be paid
+    const outstandingDebt = loans.reduce((s,l) => {
+      // Estimate remaining principal: simple approximation = principal - (months elapsed × EMI)
+      const monthsElapsed = Math.max(0, (THIS_YEAR*12+THIS_MONTH) - (l.startYear*12+l.startMonth));
+      const paidSoFar     = Math.min(l.principal, monthsElapsed * l.emi);
+      return s + Math.max(0, l.principal - paidSoFar);
+    }, 0);
+    // Money already saved inside goals
+    const savedInGoals = goals.reduce((s,g) => s + (g.saved||0), 0);
+    // Free cash = all income earned - all expenses paid
+    const freeCash = allTimeInc - allTimeExp;
+    // Net position = free cash - outstanding debt
+    const net = freeCash - outstandingDebt;
+    return { allTimeInc, allTimeExp, freeCash, outstandingDebt, savedInGoals, net, months: histMonths.length };
+  }, [histMonths, loans, goals]);
+
   /* ── Health score ── */
   const health = useMemo(() => calcHealth({ income: totalInc, outflow: totalOut, goals, savePct, budgets: curMonth.budgets || {}, expenses: curMonth.expenses, history: histMonths, allCats }), [totalInc, totalOut, goals, savePct, curMonth, histMonths, allCats]);
 
@@ -540,6 +568,9 @@ export default function Vatsu() {
     const tpl = CHALL.find(t => t.id === c.id);
     if (!tpl) return false;
     const mData = monthlyData[c.year + "-" + c.month] || { incomeSources:[], expenses:[] };
+    // Only count as completed if the month has actual data (income or expenses)
+    const hasMonthData = mData.incomeSources.length > 0 || mData.expenses.length > 0;
+    if (!hasMonthData) return false;
     const mInc  = mData.incomeSources.reduce((s,x) => s + x.amount, 0);
     return tpl.isWin(tpl.getP(mData, mInc), mInc);
   });
@@ -652,8 +683,19 @@ export default function Vatsu() {
 
   function joinChallenge(tpl) {
     if (challenges.find(c => c.id === tpl.id && c.month === activeMonth && c.year === activeYear)) return;
-    setChallenges(p => [...p, { ...tpl, month: activeMonth, year: activeYear, joined: new Date().toLocaleDateString("en-IN") }]);
+    setChallenges(p => [...p, {
+      id: tpl.id,
+      label: tpl.label,
+      icon: tpl.icon,
+      month: activeMonth,
+      year: activeYear,
+      joined: new Date().toLocaleDateString("en-IN"),
+    }]);
     setChallDetail(null);
+  }
+
+  function abandonChallenge(id) {
+    setChallenges(p => p.filter(c => !(c.id === id && c.month === activeMonth && c.year === activeYear)));
   }
 
   /* ═══════════════════════════ RENDER ═══════════════════════════════ */
@@ -807,6 +849,93 @@ export default function Vatsu() {
               <StatCard title="EMI This Month" value={totalEMI} sub={activeLoans.length + " active loan(s)"} accent="#ffa94d" icon="🏦" theme={theme} />
               <StatCard title="Remaining" value={Math.abs(remaining)} sub={remaining < 0 ? "⚠️ Over budget!" : spentPct > 90 ? "🔴 Critical" : spentPct > 70 ? "🟡 Caution" : "🟢 On track"} accent={hc} icon={remaining < 0 ? "🚨" : "✅"} theme={theme} />
             </div>
+
+
+            {/* ── NET FINANCIAL POSITION (all-time) ── */}
+            {netPosition.months > 0 && (() => {
+              const { allTimeInc, allTimeExp, freeCash, outstandingDebt, savedInGoals, net } = netPosition;
+              const isPositive = net >= 0;
+              const netColor   = net > 0 ? "#1dd1a1" : net === 0 ? "#ffd32a" : "#ff6b6b";
+              const statusLabel= net > 0 ? "Net Positive" : net === 0 ? "Break Even" : "Net Negative";
+              const statusIcon = net > 0 ? "✅" : net === 0 ? "⚖️" : "⚠️";
+              const overallSavePct = allTimeInc > 0 ? Math.round((freeCash / allTimeInc) * 100) : 0;
+              return (
+                <div style={{ background:"linear-gradient(135deg,#060f1c,#0a1628)", border:"1.5px solid "+netColor+"44", borderRadius:20, padding:"22px 24px", position:"relative", overflow:"hidden", boxShadow:"0 8px 32px "+netColor+"18" }}>
+                  <div style={{ position:"absolute", top:-50, right:-50, width:220, height:220, borderRadius:"50%", background:netColor+"08", filter:"blur(60px)", pointerEvents:"none" }} />
+                  {/* Header */}
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:16, flexWrap:"wrap", gap:10, position:"relative" }}>
+                    <div>
+                      <div style={{ fontSize:11, fontWeight:700, color:T.textSub, letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:3, fontFamily:BODY }}>💼 Overall Net Position</div>
+                      <div style={{ fontSize:11, color:T.textMuted, fontFamily:BODY }}>All-time across {netPosition.months} recorded month{netPosition.months !== 1 ? "s" : ""}</div>
+                    </div>
+                    <span style={{ padding:"5px 14px", borderRadius:20, background:netColor+"22", border:"1px solid "+netColor+"44", fontSize:11, fontWeight:700, color:netColor, fontFamily:BODY, whiteSpace:"nowrap" }}>
+                      {statusIcon} {statusLabel}
+                    </span>
+                  </div>
+                  {/* Big number */}
+                  <div style={{ marginBottom:18, position:"relative" }}>
+                    <div style={{ fontSize:11, color:T.textSub, fontFamily:BODY, marginBottom:4 }}>
+                      {isPositive ? "Net Surplus — Free Cash after all outstanding debt" : "Net Deficit — Outstanding debt exceeds your free cash"}
+                    </div>
+                    <div style={{ display:"flex", alignItems:"baseline", gap:8, flexWrap:"wrap" }}>
+                      <span style={{ fontSize:34, fontWeight:800, color:netColor, fontFamily:MONO, lineHeight:1, letterSpacing:"-1px" }}>
+                        {net < 0 ? "-" : ""}{fmtINR(Math.abs(net))}
+                      </span>
+                      {allTimeInc > 0 && (
+                        <span style={{ fontSize:13, color:netColor+"bb", fontFamily:BODY, fontWeight:600 }}>
+                          ({overallSavePct >= 0 ? "+" : ""}{overallSavePct}% of lifetime income)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {/* Breakdown tiles */}
+                  <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))", gap:10, marginBottom:16 }}>
+                    {[
+                      { label:"Total Earned",    value:allTimeInc,     color:"#1dd1a1", icon:"💵", tip:"All income across every recorded month" },
+                      { label:"Total Spent",     value:allTimeExp,     color:"#ff6b6b", icon:"💸", tip:"All expenses across every recorded month" },
+                      { label:"Free Cash",       value:freeCash,       color:freeCash>=0?"#54a0ff":"#ff6b6b", icon:"💼", tip:"Total earned minus total spent" },
+                      { label:"Debt Remaining",  value:outstandingDebt,color:"#ffa94d", icon:"🏦", tip:"Estimated remaining loan principal" },
+                      { label:"Saved in Goals",  value:savedInGoals,   color:"#cd84f1", icon:"🎯", tip:"Total contributed to all savings goals" },
+                    ].map(item => (
+                      <div key={item.label} title={item.tip} style={{ padding:"11px 13px", background:T.surface2+"cc", borderRadius:12, border:"1px solid "+item.color+"22" }}>
+                        <div style={{ fontSize:15, marginBottom:4 }}>{item.icon}</div>
+                        <div style={{ fontSize:14, fontWeight:800, color:item.color, fontFamily:MONO, lineHeight:1 }}>{fmtINR(item.value)}</div>
+                        <div style={{ fontSize:10, color:T.textSub, marginTop:4, fontFamily:BODY, lineHeight:1.4 }}>{item.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Visual bar */}
+                  {allTimeInc > 0 && (
+                    <div style={{ marginBottom:14 }}>
+                      <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
+                        <span style={{ fontSize:11, color:T.textSub, fontFamily:BODY }}>Lifetime Earnings Allocation</span>
+                        <span style={{ fontSize:11, fontWeight:700, color:netColor, fontFamily:MONO }}>{Math.round(Math.min(100,(allTimeExp/allTimeInc)*100))}% spent</span>
+                      </div>
+                      <div style={{ height:10, background:T.border, borderRadius:99, overflow:"hidden", position:"relative" }}>
+                        <div style={{ position:"absolute", left:0, height:"100%", width:Math.min(100,(allTimeExp/allTimeInc)*100)+"%", background:"linear-gradient(90deg,#c0392b,#ff6b6b)", borderRadius:99, transition:"width .9s ease" }} />
+                        {outstandingDebt > 0 && <div style={{ position:"absolute", left:Math.min(100,(allTimeExp/allTimeInc)*100)+"%", height:"100%", width:Math.min(100,(outstandingDebt/allTimeInc)*100)+"%", background:"linear-gradient(90deg,#e67e22,#ffa94d)", transition:"width .9s ease" }} />}
+                      </div>
+                      <div style={{ display:"flex", gap:12, marginTop:6, flexWrap:"wrap" }}>
+                        <span style={{ fontSize:10, color:"#ff6b6b", fontFamily:BODY }}>■ Spent {fmtINR(allTimeExp)}</span>
+                        {outstandingDebt > 0 && <span style={{ fontSize:10, color:"#ffa94d", fontFamily:BODY }}>■ Debt {fmtINR(outstandingDebt)}</span>}
+                        <span style={{ fontSize:10, color:"#1dd1a1", fontFamily:BODY }}>■ Free {fmtINR(Math.max(0,freeCash))}</span>
+                      </div>
+                    </div>
+                  )}
+                  {/* Insight tip */}
+                  <div style={{ padding:"10px 14px", background:netColor+"0e", border:"1px solid "+netColor+"22", borderRadius:10 }}>
+                    <span style={{ fontSize:12, color:netColor, fontFamily:BODY, lineHeight:1.6 }}>
+                      {net > 0
+                        ? "Your free cash of " + fmtINR(freeCash) + " minus outstanding debt (" + fmtINR(outstandingDebt) + ") leaves you with a net surplus of " + fmtINR(net) + ". Consider investing this surplus!"
+                        : net < 0
+                        ? "Your debt of " + fmtINR(outstandingDebt) + " exceeds your free cash by " + fmtINR(Math.abs(net)) + ". Focus on prepaying your highest-interest loan first."
+                        : "You are exactly at break-even. Grow your surplus by reducing monthly expenses or boosting income."
+                      }
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Progress bar */}
             {totalInc > 0 && (
@@ -1336,114 +1465,181 @@ export default function Vatsu() {
         {/* ── CHALLENGES ── */}
         {tab === "challenges" && (
           <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
-            {/* Player card */}
-            <div style={{ background:"linear-gradient(135deg,#0a1628,#0d1f38)", border:"1px solid " + lvl.color+"44", borderRadius:20, padding:"20px 24px", position:"relative", overflow:"hidden", boxShadow:"0 8px 32px " + lvl.color+"18" }}>
-              <div style={{ position:"absolute", top:-40, right:-40, width:180, height:180, borderRadius:"50%", background:lvl.color+"10", filter:"blur(50px)", pointerEvents:"none" }} />
+
+            {/* ── PLAYER CARD ── */}
+            <div style={{ background:"linear-gradient(135deg,#060f1c,#0a1628)", border:"1px solid "+lvl.color+"44", borderRadius:20, padding:"22px 24px", position:"relative", overflow:"hidden", boxShadow:"0 8px 32px "+lvl.color+"18" }}>
+              <div style={{ position:"absolute", top:-40, right:-40, width:180, height:180, borderRadius:"50%", background:lvl.color+"0e", filter:"blur(50px)", pointerEvents:"none" }} />
               <div style={{ position:"relative", display:"flex", gap:18, alignItems:"center", flexWrap:"wrap" }}>
-                <div style={{ width:70, height:70, borderRadius:"50%", background:"linear-gradient(135deg," + lvl.color+"33," + lvl.color+"11)", border:"3px solid " + lvl.color, display:"flex", alignItems:"center", justifyContent:"center", fontSize:30, flexShrink:0, boxShadow:"0 0 24px " + lvl.color+"44" }}>{lvl.icon}</div>
-                <div style={{ flex:1, minWidth:170 }}>
-                  <div style={{ fontSize:10, color:T.textSub, textTransform:"uppercase", letterSpacing:"0.14em", marginBottom:4, fontFamily:BODY }}>Challenger Profile</div>
-                  <div style={{ fontSize:21, fontWeight:800, color:lvl.color, fontFamily:TF, lineHeight:1 }}>{lvl.label}</div>
-                  <div style={{ fontSize:13, color:T.textSub, margin:"4px 0 8px", fontFamily:BODY }}><span style={{ color:"#ffd32a", fontWeight:700, fontFamily:MONO }}>{totalXP} XP</span>{lvl.next ? " · " + (lvl.next.min - totalXP) + " XP to next level" : ""}</div>
+                {/* Avatar */}
+                <div style={{ width:68, height:68, borderRadius:"50%", background:"linear-gradient(135deg,"+lvl.color+"33,"+lvl.color+"11)", border:"3px solid "+lvl.color, display:"flex", alignItems:"center", justifyContent:"center", fontSize:30, flexShrink:0, boxShadow:"0 0 24px "+lvl.color+"55" }}>{lvl.icon}</div>
+                {/* Level info */}
+                <div style={{ flex:1, minWidth:160 }}>
+                  <div style={{ fontSize:10, color:T.textSub, textTransform:"uppercase", letterSpacing:"0.14em", marginBottom:3, fontFamily:BODY }}>Challenger Profile</div>
+                  <div style={{ fontSize:20, fontWeight:800, color:lvl.color, fontFamily:TF, lineHeight:1.1 }}>{lvl.label}</div>
+                  <div style={{ fontSize:13, color:T.textSub, margin:"4px 0 9px", fontFamily:BODY }}>
+                    <span style={{ color:"#ffd32a", fontWeight:700, fontFamily:MONO }}>{totalXP} XP</span>
+                    {lvl.next ? " · "+Math.max(0,lvl.next.min-totalXP)+" XP to "+lvl.next.label : " · Max Level!"}
+                  </div>
                   <div style={{ height:7, background:T.border, borderRadius:99 }}>
-                    <div style={{ height:7, width:lvl.pct+"%", background:"linear-gradient(90deg," + lvl.color+"88," + lvl.color+")", borderRadius:99, transition:"width .8s", boxShadow:"0 0 8px " + lvl.color+"55" }} />
+                    <div style={{ height:7, width:lvl.pct+"%", background:"linear-gradient(90deg,"+lvl.color+"88,"+lvl.color+")", borderRadius:99, transition:"width .9s ease", boxShadow:"0 0 8px "+lvl.color+"55" }} />
                   </div>
                 </div>
-                <div style={{ display:"flex", gap:18, flexWrap:"wrap" }}>
-                  {[["Done",allCompletedChalls.length,"#1dd1a1"],["Active",activeChalls.length,"#ffd32a"],["Badges",earnedBadges.length,"#cd84f1"]].map(([l,v,c]) => (
+                {/* Stats */}
+                <div style={{ display:"flex", gap:20, flexWrap:"wrap" }}>
+                  {[
+                    ["Completed", allCompletedChalls.length, "#1dd1a1"],
+                    ["Active",    activeChalls.filter(c=>{ const t=CHALL.find(x=>x.id===c.id); if(!t)return false; const p=t.getP(curMonth,totalInc); return !t.isWin(p,totalInc); }).length, "#ffd32a"],
+                    ["Badges",    earnedBadges.length, "#cd84f1"],
+                  ].map(([l,v,c]) => (
                     <div key={l} style={{ textAlign:"center" }}>
-                      <div style={{ fontSize:24, fontWeight:800, color:c, fontFamily:MONO }}>{v}</div>
-                      <div style={{ fontSize:11, color:T.textSub, marginTop:2, fontFamily:BODY }}>{l}</div>
+                      <div style={{ fontSize:26, fontWeight:800, color:c, fontFamily:MONO, lineHeight:1, textShadow:"0 0 12px "+c+"66" }}>{v}</div>
+                      <div style={{ fontSize:11, color:T.textSub, marginTop:3, fontFamily:BODY }}>{l}</div>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
-            {/* Badges */}
+
+            {/* ── BADGES ── */}
             {earnedBadges.length > 0 && (
               <div className="vcard" style={{ background:T.cardGrad }}>
                 <div style={{ fontSize:11, fontWeight:700, color:T.textSub, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:12, fontFamily:BODY }}>🏅 Earned Badges</div>
-                <div style={{ display:"flex", gap:9, flexWrap:"wrap" }}>
+                <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
                   {earnedBadges.map(t => (
-                    <div key={t.id} style={{ display:"flex", alignItems:"center", gap:7, padding:"7px 14px", borderRadius:30, background:t.color+"22", border:"1px solid " + t.color+"44" }}>
-                      <span style={{ fontSize:17 }}>{t.icon}</span>
+                    <div key={t.id} style={{ display:"flex", alignItems:"center", gap:7, padding:"7px 14px", borderRadius:30, background:t.color+"22", border:"1px solid "+t.color+"44", transition:"all .2s", cursor:"default" }}
+                      onMouseEnter={e=>{e.currentTarget.style.transform="scale(1.06)";}} onMouseLeave={e=>{e.currentTarget.style.transform="scale(1)";}}>
+                      <span style={{ fontSize:16 }}>{t.icon}</span>
                       <span style={{ fontSize:12, fontWeight:700, color:t.color, fontFamily:BODY }}>{t.badge.split(" ").slice(1).join(" ")}</span>
                     </div>
                   ))}
                 </div>
               </div>
             )}
-            {/* Active challenges */}
-            {activeChalls.length > 0 && (
+
+            {/* ── ACTIVE CHALLENGES ── */}
+            {activeChalls.length > 0 ? (
               <div>
-                <div style={{ fontSize:11, fontWeight:700, color:T.textSub, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:12, fontFamily:BODY }}>⚔️ Active This Month</div>
-                {activeChalls.map(c => {
-                  const tpl = CHALL.find(t => t.id === c.id);
-                  if (!tpl) return null;
-                  const mInc = curMonth.incomeSources.reduce((s,x) => s+x.amount, 0);
-                  const prog = tpl.getP(curMonth, mInc);
-                  const won  = tpl.isWin(prog, mInc);
-                  const pct  = tpl.pct(prog, mInc);
-                  const ds   = DIFF_STYLE[tpl.diff] || DIFF_STYLE.Easy;
-                  return (
-                    <div key={c.id} onClick={() => setChallDetail(c.id)} style={{ cursor:"pointer", padding:"16px 20px", background:T.cardGrad, border:"1px solid " + (won ? tpl.color+"88" : T.border), borderRadius:16, marginBottom:10, transition:"all .25s" }}>
-                      <div style={{ display:"flex", gap:12, alignItems:"center", flexWrap:"wrap" }}>
-                        <div style={{ width:48, height:48, borderRadius:13, background:tpl.color+"22", border:"1px solid " + tpl.color+"44", display:"flex", alignItems:"center", justifyContent:"center", fontSize:24, flexShrink:0 }}>{tpl.icon}</div>
-                        <div style={{ flex:1 }}>
-                          <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4, flexWrap:"wrap", gap:6 }}>
-                            <span style={{ fontWeight:700, color:T.text, fontSize:15, fontFamily:TF }}>{tpl.label}</span>
-                            <div style={{ display:"flex", gap:6 }}>
-                              <span style={{ padding:"2px 8px", borderRadius:20, background:ds.bg, color:ds.color, fontSize:10, fontWeight:700, fontFamily:BODY }}>{ds.stars} {tpl.diff}</span>
-                              {won ? <span style={{ padding:"2px 9px", borderRadius:20, background:"#1dd1a122", color:"#1dd1a1", fontSize:11, fontWeight:700 }}>🎉 Done!</span> : <span style={{ padding:"2px 9px", borderRadius:20, background:"#ffa94d22", color:"#ffa94d", fontSize:11, fontWeight:700 }}>⚡ Active</span>}
+                <div style={{ fontSize:11, fontWeight:700, color:T.textSub, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:12, fontFamily:BODY }}>⚔️ Active This Month — {MONTHS[activeMonth]}</div>
+                <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+                  {activeChalls.map(c => {
+                    const tpl = CHALL.find(t => t.id === c.id);
+                    if (!tpl) return null;
+                    const prog = tpl.getP(curMonth, totalInc);
+                    const won  = tpl.isWin(prog, totalInc);
+                    const pct  = tpl.pct(prog, totalInc);
+                    const ds   = DIFF_STYLE[tpl.diff] || DIFF_STYLE.Easy;
+                    return (
+                      <div key={c.id} style={{ padding:"16px 20px", background:won?"linear-gradient(135deg,#071a10,#050e09)":T.cardGrad, border:"1px solid "+(won?tpl.color+"88":T.border), borderRadius:16, transition:"all .25s", boxShadow:won?"0 4px 20px "+tpl.color+"22":"none" }}>
+                        {/* Header row */}
+                        <div style={{ display:"flex", gap:12, alignItems:"center", marginBottom:12 }}>
+                          <div style={{ width:46, height:46, borderRadius:12, background:tpl.color+"22", border:"1px solid "+tpl.color+"44", display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, flexShrink:0 }}>{tpl.icon}</div>
+                          <div style={{ flex:1 }}>
+                            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:6 }}>
+                              <span style={{ fontWeight:700, color:T.text, fontSize:15, fontFamily:TF }}>{tpl.label}</span>
+                              <div style={{ display:"flex", gap:6, alignItems:"center" }}>
+                                <span style={{ padding:"2px 8px", borderRadius:20, background:ds.bg, color:ds.color, fontSize:10, fontWeight:700, fontFamily:BODY }}>{ds.stars} {tpl.diff}</span>
+                                {won
+                                  ? <span style={{ padding:"3px 10px", borderRadius:20, background:"#1dd1a122", color:"#1dd1a1", fontSize:11, fontWeight:700, animation:"vPulse 2s infinite" }}>🎉 Completed!</span>
+                                  : <span style={{ padding:"3px 10px", borderRadius:20, background:"#ffa94d22", color:"#ffa94d", fontSize:11, fontWeight:700 }}>⚡ In Progress</span>
+                                }
+                              </div>
                             </div>
-                          </div>
-                          <div style={{ height:7, background:T.border, borderRadius:99, marginBottom:4 }}>
-                            <div style={{ height:7, width:pct+"%", background:"linear-gradient(90deg,"+tpl.color+"88,"+tpl.color+")", borderRadius:99, transition:"width .6s", boxShadow:"0 0 6px " + tpl.color+"55" }} />
-                          </div>
-                          <div style={{ display:"flex", justifyContent:"space-between" }}>
-                            <span style={{ fontSize:11, color:T.textSub, fontFamily:BODY }}>{tpl.metric(prog, mInc)}</span>
-                            <span style={{ fontSize:11, color:"#ffd32a", fontWeight:700, fontFamily:MONO }}>+{tpl.xp} XP</span>
+                            <div style={{ fontSize:11, color:T.textMuted, marginTop:2, fontFamily:BODY }}>Joined {c.joined} · ⏱ {tpl.days} day challenge</div>
                           </div>
                         </div>
+                        {/* Progress bar */}
+                        <div style={{ height:8, background:T.border, borderRadius:99, overflow:"hidden", marginBottom:6 }}>
+                          <div style={{ height:8, width:pct+"%", background:"linear-gradient(90deg,"+tpl.color+"88,"+tpl.color+")", borderRadius:99, transition:"width .7s cubic-bezier(.34,1.56,.64,1)", boxShadow:"0 0 8px "+tpl.color+"55" }} />
+                        </div>
+                        {/* Metric + XP + abandon */}
+                        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:8 }}>
+                          <span style={{ fontSize:12, color:T.textSub, fontFamily:BODY, flex:1 }}>{tpl.metric(prog, totalInc)}</span>
+                          <div style={{ display:"flex", gap:10, alignItems:"center" }}>
+                            <span style={{ fontSize:11, fontWeight:700, color:"#ffd32a", fontFamily:MONO }}>+{tpl.xp} XP</span>
+                            {!won && (
+                              <button onClick={() => abandonChallenge(c.id)}
+                                style={{ padding:"3px 9px", borderRadius:8, border:"1px solid #ff6b6b33", background:"#ff6b6b12", color:"#ff6b6b", fontSize:10, cursor:"pointer", fontFamily:BODY }}
+                                title="Abandon this challenge">
+                                Abandon
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                        {/* Win tip */}
+                        {!won && (
+                          <div style={{ marginTop:10, padding:"8px 12px", background:tpl.color+"0e", borderRadius:8, fontSize:11, color:tpl.color, fontFamily:BODY }}>
+                            💡 {tpl.tips[0]}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              /* Empty active state */
+              <div style={{ padding:"28px 24px", background:T.cardGrad, border:"1px solid "+T.border, borderRadius:18, textAlign:"center" }}>
+                <div style={{ fontSize:40, marginBottom:12 }}>🎯</div>
+                <div style={{ fontSize:16, fontWeight:700, color:T.text, fontFamily:TF, marginBottom:6 }}>No active challenges yet</div>
+                <div style={{ fontSize:13, color:T.textSub, fontFamily:BODY, lineHeight:1.7, maxWidth:320, margin:"0 auto 16px" }}>
+                  Pick a challenge below and tap Accept. Each one you complete earns XP and a badge!
+                </div>
+                <div style={{ display:"flex", gap:8, justifyContent:"center", flexWrap:"wrap" }}>
+                  {["🌱 Start small","⚡ Earn XP","🏅 Win badges","📈 Build habits"].map(t => (
+                    <span key={t} style={{ padding:"4px 12px", borderRadius:20, background:"#1dd1a118", color:"#1dd1a1", fontSize:11, fontFamily:BODY, fontWeight:600 }}>{t}</span>
+                  ))}
+                </div>
               </div>
             )}
-            {/* Available challenges */}
+
+            {/* ── AVAILABLE CHALLENGES ── */}
             <div>
-              <div style={{ display:"flex", justifyContent:"space-between", marginBottom:12, alignItems:"center" }}>
-                <div style={{ fontSize:11, fontWeight:700, color:T.textSub, letterSpacing:"0.1em", textTransform:"uppercase", fontFamily:BODY }}>🎯 Available Challenges</div>
-                <div style={{ fontSize:11, color:T.textSub, fontFamily:BODY }}>Tap to learn more</div>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
+                <div style={{ fontSize:11, fontWeight:700, color:T.textSub, letterSpacing:"0.1em", textTransform:"uppercase", fontFamily:BODY }}>🎯 All Challenges ({CHALL.length})</div>
+                <div style={{ fontSize:11, color:T.textSub, fontFamily:BODY }}>Tap to see details</div>
               </div>
               <div className="vgrid" style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(270px,1fr))", gap:13 }}>
                 {CHALL.map((tpl, i) => {
-                  const already = activeChalls.find(c => c.id === tpl.id);
-                  const ds = DIFF_STYLE[tpl.diff];
+                  const already = !!activeChalls.find(c => c.id === tpl.id);
+                  const ds = DIFF_STYLE[tpl.diff] || DIFF_STYLE.Easy;
+                  const everWon = !!allCompletedChalls.find(c => c.id === tpl.id);
                   return (
-                    <div key={tpl.id} onClick={() => setChallDetail(tpl.id)} style={{ cursor:"pointer", padding:"18px 20px", background:T.cardGrad, border:"1px solid " + (already ? tpl.color+"55" : T.border), borderRadius:16, position:"relative", overflow:"hidden", transition:"all .25s", animation:"vFadeUp .4s " + (i*0.05) + "s both" }}>
-                      <div style={{ position:"absolute", top:-15, right:-15, width:90, height:90, borderRadius:"50%", background:tpl.color+"14", filter:"blur(22px)", pointerEvents:"none" }} />
+                    <div key={tpl.id} onClick={() => setChallDetail(tpl.id)}
+                      style={{ cursor:"pointer", padding:"18px 20px", background:T.cardGrad, border:"1px solid "+(already?tpl.color+"55":T.border), borderRadius:16, position:"relative", overflow:"hidden", transition:"all .22s", animation:"vFadeUp .4s "+(i*0.05)+"s both" }}
+                      onMouseEnter={e=>{e.currentTarget.style.borderColor=tpl.color+"88";e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 8px 24px "+tpl.color+"18";}}
+                      onMouseLeave={e=>{e.currentTarget.style.borderColor=already?tpl.color+"55":T.border;e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="none";}}>
+                      {/* Glow orb */}
+                      <div style={{ position:"absolute", top:-15, right:-15, width:90, height:90, borderRadius:"50%", background:tpl.color+"12", filter:"blur(22px)", pointerEvents:"none" }} />
+                      {/* Ever completed badge */}
+                      {everWon && <div style={{ position:"absolute", top:12, right:12, width:24, height:24, borderRadius:"50%", background:tpl.color, display:"flex", alignItems:"center", justifyContent:"center", fontSize:12 }}>✓</div>}
                       <div style={{ display:"flex", alignItems:"center", gap:11, marginBottom:10 }}>
-                        <div style={{ width:46, height:46, borderRadius:12, background:tpl.color+"22", border:"1px solid " + tpl.color+"44", display:"flex", alignItems:"center", justifyContent:"center", fontSize:22 }}>{tpl.icon}</div>
+                        <div style={{ width:46, height:46, borderRadius:12, background:tpl.color+"22", border:"1px solid "+tpl.color+"44", display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, flexShrink:0 }}>{tpl.icon}</div>
                         <div>
                           <div style={{ fontWeight:800, color:T.text, fontSize:14, fontFamily:TF }}>{tpl.label}</div>
-                          <div style={{ display:"flex", gap:5, marginTop:4 }}>
-                            <span style={{ padding:"2px 7px", borderRadius:20, background:ds.bg, color:ds.color, fontSize:9, fontWeight:700 }}>{ds.stars} {tpl.diff}</span>
-                            <span style={{ padding:"2px 7px", borderRadius:20, background:"#ffd32a22", color:"#ffd32a", fontSize:9, fontWeight:700 }}>+{tpl.xp} XP</span>
+                          <div style={{ display:"flex", gap:5, marginTop:4, flexWrap:"wrap" }}>
+                            <span style={{ padding:"2px 7px", borderRadius:20, background:ds.bg, color:ds.color, fontSize:9, fontWeight:700, fontFamily:BODY }}>{ds.stars} {tpl.diff}</span>
+                            <span style={{ padding:"2px 7px", borderRadius:20, background:"#ffd32a22", color:"#ffd32a", fontSize:9, fontWeight:700, fontFamily:MONO }}>+{tpl.xp} XP</span>
+                            <span style={{ padding:"2px 7px", borderRadius:20, background:T.border, color:T.textSub, fontSize:9, fontFamily:BODY }}>⏱ {tpl.days}d</span>
                           </div>
                         </div>
                       </div>
-                      <div style={{ fontSize:12, color:T.textSub, lineHeight:1.6, marginBottom:10, fontFamily:BODY }}>{tpl.desc}</div>
-                      <div style={{ fontSize:11, color:tpl.color, padding:"6px 10px", background:tpl.color+"12", borderRadius:8, fontFamily:BODY }}>{tpl.why.substring(0,85)}…</div>
-                      <div style={{ marginTop:10, padding:"7px 12px", borderRadius:9, background: already ? "#1dd1a118" : tpl.color+"18", color: already ? "#1dd1a1" : tpl.color, fontSize:12, textAlign:"center", fontWeight:600, fontFamily:BODY, border:"1px solid " + (already ? "#1dd1a133" : tpl.color+"33") }}>
-                        {already ? "✓ Active this month" : "Tap to accept →"}
+                      <div style={{ fontSize:12, color:T.textSub, lineHeight:1.6, marginBottom:9, fontFamily:BODY }}>{tpl.desc}</div>
+                      <div style={{ fontSize:11, color:tpl.color, padding:"6px 10px", background:tpl.color+"10", borderRadius:8, marginBottom:10, fontFamily:BODY, lineHeight:1.5 }}>
+                        💡 {tpl.why.length > 85 ? tpl.why.substring(0,85)+"…" : tpl.why}
+                      </div>
+                      <div style={{ padding:"7px 12px", borderRadius:9, textAlign:"center", fontSize:12, fontWeight:600, fontFamily:BODY,
+                        background: already ? "#1dd1a118" : tpl.color+"18",
+                        color:      already ? "#1dd1a1"   : tpl.color,
+                        border:     "1px solid "+(already ? "#1dd1a133" : tpl.color+"33"),
+                      }}>
+                        {already ? "✓ Active — tap for details" : "Tap to learn more & accept →"}
                       </div>
                     </div>
                   );
                 })}
               </div>
             </div>
+
           </div>
         )}
 
