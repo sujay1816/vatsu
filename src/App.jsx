@@ -1629,72 +1629,155 @@ export default function Vatsu() {
 
 /* ─── AI ADVISOR ─────────────────────────────────────────────────────── */
 function AIAdvisor({ monthlyData, goals, loans, activeMonth, activeYear, theme, allCats, totalInc, totalExp, curMonth }) {
-  const T = THEMES[theme];
+  const T   = THEMES[theme];
   const IS2 = iStyle(T);
-  const [msgs, setMsgs] = useState([{ role:"assistant", content:"👋 Hi! I'm your Vatsu AI Advisor. I can analyse your spending, suggest savings strategies, and answer finance questions. What would you like to know?" }]);
-  const [input, setInput] = useState("");
+
+  const [msgs,    setMsgs   ] = useState([{
+    role:"assistant",
+    content:"Hi! I am your Vatsu AI Advisor, powered by Google Gemini.\n\nI know your real financial data and give you personalised advice - completely free!\n\nTry asking:\n- How can I save more this month?\n- Where am I overspending?\n- What is my financial health?\n- How to build an emergency fund?\n- Tell me about my goals"
+  }]);
+  const [input,   setInput  ] = useState("");
   const [loading, setLoading] = useState(false);
+  const [status,  setStatus ] = useState("idle");
   const bottom = useRef(null);
   useEffect(() => { bottom.current?.scrollIntoView({ behavior:"smooth" }); }, [msgs]);
 
-  const catBreak = allCats.map(c => ({ label:c.label, spent: curMonth.expenses.filter(e => e.category===c.id).reduce((s,e)=>s+e.amount,0) })).filter(c => c.spent>0);
-  const isPreview = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname.includes("csb.app") || !window.location.hostname);
+  const catBreak = allCats
+    .map(c => ({ label:c.label, icon:c.icon||"", spent: curMonth.expenses.filter(e=>e.category===c.id).reduce((s,e)=>s+e.amount,0) }))
+    .filter(c => c.spent > 0)
+    .sort((a,b) => b.spent - a.spent);
+
+  const totalEMI = loans.reduce((s,l) => {
+    const start = l.startYear*12+l.startMonth;
+    const cur   = activeYear*12+activeMonth;
+    return cur>=start && cur<start+(l.tenureMonths||9999) ? s+l.emi : s;
+  }, 0);
+
+  const remaining   = totalInc - totalExp - totalEMI;
+  const savePct     = totalInc > 0 ? Math.round(Math.max(0,(totalInc-totalExp-totalEMI)/totalInc*100)) : 0;
+  const pendingGoals= goals.filter(g => g.saved < g.target);
+  const nearDeadline= goals.filter(g => {
+    if(!g.deadline) return false;
+    const days = Math.ceil((new Date(g.deadline)-new Date())/(1000*60*60*24));
+    return days>0 && days<=90;
+  });
 
   async function send() {
-    if (!input.trim() || loading) return;
-    const userMsg = { role:"user", content:input.trim() };
-    setMsgs(p => [...p, userMsg]);
-    setInput(""); setLoading(true);
-    const ctx = "You are Vatsu's AI Financial Advisor — a warm, friendly Indian personal finance expert.\n\nUser's " + MONTHS[activeMonth] + " data:\n• Income: " + fmtINR(totalInc) + "\n• Expenses: " + fmtINR(totalExp) + "\n• Remaining: " + fmtINR(totalInc-totalExp) + "\n• By category: " + catBreak.map(c => c.label + " = " + fmtINR(c.spent)).join(", ") + "\n• Loans: " + loans.length + " · Goals: " + goals.length + "\n\nRules: Use INR (₹). Keep under 160 words. Be warm, specific, actionable. End with one practical tip.";
-    const apiMsgs = [...msgs, userMsg].filter(m => !(m.role==="assistant" && m===msgs[0])).map(m => ({ role:m.role, content:m.content }));
+    const q = input.trim();
+    if (!q || loading) return;
+    setMsgs(p => [...p, { role:"user", content:q }]);
+    setInput("");
+    setLoading(true);
+    setStatus("idle");
+
+    const context = [
+      "You are Vatsu AI Financial Advisor - a warm, knowledgeable Indian personal finance expert.",
+      "Respond in a friendly, direct, actionable tone. Use rupee symbol and Indian lakh/crore format.",
+      "Keep responses under 180 words. End with one specific action the user can take today.",
+      "",
+      "User financial snapshot for " + MONTHS[activeMonth] + ":",
+      "Income: " + fmtINR(totalInc),
+      "Total Expenses: " + fmtINR(totalExp),
+      "EMI Payments: " + fmtINR(totalEMI),
+      "Remaining Balance: " + fmtINR(remaining),
+      "Savings Rate: " + savePct + "%",
+      catBreak.length > 0
+        ? "Spending by category: " + catBreak.map(c=>c.label+"="+fmtINR(c.spent)).join(", ")
+        : "No expenses recorded yet",
+      "Active Loans: " + loans.length,
+      "Savings Goals: " + goals.length + " total, " + pendingGoals.length + " in progress",
+      nearDeadline.length > 0
+        ? "Goals with deadline within 90 days: " + nearDeadline.map(g=>g.label).join(", ")
+        : "",
+      "",
+      "Recent conversation:",
+      ...msgs.slice(-4).map(m => (m.role==="user"?"User: ":"Advisor: ") + m.content),
+    ].filter(Boolean).join("\n");
+
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:400, system:ctx, messages:apiMsgs }) });
-      if (!res.ok) throw new Error("HTTP " + res.status);
+      const res = await fetch("/api/chat", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ message:q, context }),
+      });
+      if (!res.ok) {
+        const e = await res.json().catch(()=>({}));
+        throw new Error(e.error || "Server error " + res.status);
+      }
       const data = await res.json();
-      setMsgs(p => [...p, { role:"assistant", content: data.content?.[0]?.text || "Sorry, try again." }]);
+      if (!data.reply) throw new Error("Empty response");
+      setMsgs(p => [...p, { role:"assistant", content:data.reply }]);
+      setStatus("ok");
     } catch(err) {
-      const msg = (err.message || "").includes("fetch") || (err.message || "").includes("Failed")
-        ? "⚠️ The AI Advisor works on your deployed Vercel/Netlify link — CORS blocks it in preview. Check the Insights tab for auto-generated analysis in the meantime!"
-        : "⚠️ " + err.message;
-      setMsgs(p => [...p, { role:"assistant", content:msg }]);
+      const is404 = err.message.includes("404") || err.message.includes("fetch") || err.message.includes("Failed") || err.message.includes("Network");
+      const errMsg = is404
+        ? "To activate the AI Advisor:\n\n1. Add the api/chat.js file to your GitHub repo root\n2. Add GEMINI_API_KEY in Vercel Environment Variables\n3. Redeploy\n\nThe api/chat.js file was provided alongside this app. After setup, the AI works for you and all your friends for free!"
+        : "Error: " + err.message + "\n\nCheck that GEMINI_API_KEY is set in Vercel and api/chat.js exists in your repo.";
+      setMsgs(p => [...p, { role:"assistant", content:errMsg }]);
+      setStatus("error");
     }
     setLoading(false);
   }
 
-  const quickQ = ["How can I save more?","Where am I overspending?","How to build an emergency fund?","Tips to cut food expenses"];
+  const quickQ = ["How can I save more?","Where am I overspending?","What is my financial health?","Emergency fund advice","Review my goals","How are my loans?"];
+
+  function MsgText({ text, isUser }) {
+    if(isUser) return <span style={{fontSize:13,fontFamily:BODY,fontWeight:600}}>{text}</span>;
+    return (
+      <div style={{fontSize:13,fontFamily:BODY,lineHeight:1.75}}>
+        {text.split("\n").map((line,i) => {
+          if(!line.trim()) return <div key={i} style={{height:5}}/>;
+          const parts = line.split(/(\*\*[^*]+\*\*)/g).map((p,j) =>
+            p.startsWith("**")&&p.endsWith("**")
+              ? <strong key={j} style={{color:T.textBright}}>{p.slice(2,-2)}</strong>
+              : p
+          );
+          return <div key={i} style={{marginBottom:3}}>{parts}</div>;
+        })}
+      </div>
+    );
+  }
 
   return (
-    <div style={{ display:"flex", flexDirection:"column", height:520, background:T.cardGrad, border:"1px solid " + T.border, borderRadius:20, overflow:"hidden" }}>
-      <div style={{ padding:"14px 18px", background: theme==="dark" ? "linear-gradient(135deg,#060f1c,#04090f)" : "linear-gradient(135deg,#0d2340,#1a3a62)", borderBottom:"1px solid " + T.border }}>
-        <div style={{ display:"flex", alignItems:"center", gap:11 }}>
-          <div style={{ width:38, height:38, borderRadius:"50%", background:"linear-gradient(135deg,#1dd1a1,#0abf8a)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:19, boxShadow:"0 0 14px #1dd1a144", flexShrink:0 }}>🤖</div>
-          <div style={{ flex:1 }}>
-            <div style={{ fontWeight:700, color:"#f0f8ff", fontFamily:TF }}>Vatsu AI Advisor</div>
-            <div style={{ fontSize:11, color: isPreview?"#ffa94d":"#1dd1a1", fontFamily:BODY }}>{isPreview ? "⚠️ Preview mode — deploy for full AI" : "● Powered by Claude · Live"}</div>
+    <div style={{display:"flex",flexDirection:"column",height:540,background:T.cardGrad,border:"1px solid "+T.border,borderRadius:20,overflow:"hidden"}}>
+      <div style={{padding:"14px 18px",background:theme==="dark"?"linear-gradient(135deg,#060f1c,#04090f)":"linear-gradient(135deg,#0d2340,#1a3a62)",borderBottom:"1px solid "+T.border}}>
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
+          <div style={{width:40,height:40,borderRadius:"50%",background:"linear-gradient(135deg,#1dd1a1,#0abf8a)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,boxShadow:"0 0 16px #1dd1a155",flexShrink:0}}>🤖</div>
+          <div style={{flex:1}}>
+            <div style={{fontWeight:700,color:"#f0f8ff",fontFamily:TF,fontSize:15}}>Vatsu AI Advisor</div>
+            <div style={{fontSize:11,color:"#1dd1a1",fontFamily:BODY,marginTop:1}}>Powered by Google Gemini · Free · Works for everyone</div>
+          </div>
+          <div style={{padding:"4px 10px",borderRadius:20,fontSize:10,fontFamily:BODY,fontWeight:700,background:status==="ok"?"#1dd1a122":status==="error"?"#ff6b6b22":"#54a0ff22",color:status==="ok"?"#1dd1a1":status==="error"?"#ff6b6b":"#54a0ff",border:"1px solid "+(status==="ok"?"#1dd1a144":status==="error"?"#ff6b6b44":"#54a0ff44")}}>
+            {status==="ok"?"Gemini Live":status==="error"?"Setup Needed":"Gemini"}
           </div>
         </div>
-        {isPreview && <div style={{ marginTop:9, padding:"7px 11px", background:"#ffa94d18", border:"1px solid #ffa94d44", borderRadius:9, fontSize:11, color:"#ffa94d", fontFamily:BODY, lineHeight:1.6 }}>💡 AI chat works on your deployed <b>Vercel/Netlify link</b>. The <b>Insights tab</b> works fully right now!</div>}
+        <div style={{marginTop:9,padding:"7px 12px",background:"#54a0ff12",border:"1px solid #54a0ff33",borderRadius:9,fontSize:11,color:"#54a0ff",fontFamily:BODY,lineHeight:1.6}}>
+          Setup: Add <b>api/chat.js</b> to GitHub repo + set <b>GEMINI_API_KEY</b> in Vercel → Redeploy. Then AI works for everyone!
+        </div>
       </div>
-      <div style={{ flex:1, overflowY:"auto", padding:"14px 18px", display:"flex", flexDirection:"column", gap:11 }}>
-        {msgs.map((m, i) => (
-          <div key={i} style={{ display:"flex", justifyContent: m.role==="user" ? "flex-end" : "flex-start", gap:8 }}>
-            {m.role === "assistant" && <div style={{ width:26, height:26, borderRadius:"50%", background:"linear-gradient(135deg,#1dd1a1,#0abf8a)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, flexShrink:0, marginTop:2 }}>🤖</div>}
-            <div style={{ maxWidth:"78%", padding:"10px 13px", borderRadius: m.role==="user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px", background: m.role==="user" ? "linear-gradient(135deg,#1dd1a1,#0abf8a)" : (theme==="dark" ? "#0b1421" : "#e8f0fa"), color: m.role==="user" ? "#02080f" : T.text, fontSize:13, fontFamily:BODY, lineHeight:1.6, border: m.role==="assistant" ? "1px solid " + T.border2 : "none" }}>
-              {m.content}
+      <div style={{flex:1,overflowY:"auto",padding:"14px 16px",display:"flex",flexDirection:"column",gap:12}}>
+        {msgs.map((m,i) => (
+          <div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start",gap:8}}>
+            {m.role==="assistant"&&<div style={{width:28,height:28,borderRadius:"50%",background:"linear-gradient(135deg,#1dd1a1,#0abf8a)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,flexShrink:0,marginTop:2}}>🤖</div>}
+            <div style={{maxWidth:"82%",padding:"11px 14px",borderRadius:m.role==="user"?"18px 18px 4px 18px":"18px 18px 18px 4px",background:m.role==="user"?"linear-gradient(135deg,#1dd1a1,#0abf8a)":theme==="dark"?"linear-gradient(135deg,#0b1825,#071018)":"#f0f6ff",color:m.role==="user"?"#02080f":T.text,border:m.role==="assistant"?"1px solid "+T.border2:"none",boxShadow:m.role==="user"?"0 4px 14px #1dd1a133":"0 2px 8px #00000022"}}>
+              <MsgText text={m.content} isUser={m.role==="user"}/>
             </div>
           </div>
         ))}
-        {loading && <div style={{ display:"flex", gap:5, padding:"10px 13px", background: theme==="dark" ? "#0b1421" : "#e8f0fa", borderRadius:"16px 16px 16px 4px", width:"fit-content", border:"1px solid " + T.border2 }}>
-          {[0,1,2].map(i => <div key={i} style={{ width:7, height:7, borderRadius:"50%", background:"#4e7090", animation:"vPulse 1.2s " + (i*0.2) + "s infinite" }} />)}
+        {loading&&<div style={{display:"flex",alignItems:"center",gap:8}}>
+          <div style={{width:28,height:28,borderRadius:"50%",background:"linear-gradient(135deg,#1dd1a1,#0abf8a)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,flexShrink:0}}>🤖</div>
+          <div style={{display:"flex",gap:5,padding:"12px 16px",background:theme==="dark"?"#0b1825":"#f0f6ff",borderRadius:"18px 18px 18px 4px",border:"1px solid "+T.border2}}>
+            {[0,1,2].map(i=><div key={i} style={{width:8,height:8,borderRadius:"50%",background:"#1dd1a1",animation:"vPulse 1.2s "+(i*0.2)+"s infinite"}}/>)}
+          </div>
         </div>}
-        <div ref={bottom} />
+        <div ref={bottom}/>
       </div>
-      <div style={{ padding:"6px 14px", display:"flex", gap:6, overflowX:"auto", borderTop:"1px solid " + T.border }}>
-        {quickQ.map(q => <button key={q} onClick={() => setInput(q)} style={{ whiteSpace:"nowrap", padding:"5px 11px", borderRadius:18, border:"1px solid " + T.border, background:"transparent", color:T.textSub, fontSize:11, cursor:"pointer", fontFamily:BODY }}>{q}</button>)}
+      <div style={{padding:"8px 14px 4px",display:"flex",gap:6,overflowX:"auto",borderTop:"1px solid "+T.border}}>
+        {quickQ.map(q=><button key={q} onClick={()=>setInput(q)} style={{whiteSpace:"nowrap",padding:"5px 12px",borderRadius:18,border:"1px solid "+T.border,background:"transparent",color:T.textSub,fontSize:11,cursor:"pointer",fontFamily:BODY}}>{q}</button>)}
       </div>
-      <div style={{ padding:"10px 14px", borderTop:"1px solid " + T.border, display:"flex", gap:8 }}>
-        <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key==="Enter" && send()} placeholder="Ask about your finances…" style={{ ...IS2, flex:1, padding:"9px 13px" }} />
-        <Btn v="primary" onClick={send} sx={{ padding:"9px 16px", whiteSpace:"nowrap" }}>{loading ? "…" : "Send ➤"}</Btn>
+      <div style={{padding:"10px 14px",borderTop:"1px solid "+T.border,display:"flex",gap:8}}>
+        <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&send()} placeholder="Ask about your finances..." style={{...IS2,flex:1,padding:"10px 14px"}}/>
+        <Btn v="primary" onClick={send} sx={{padding:"10px 18px",whiteSpace:"nowrap",opacity:loading?0.6:1}}>{loading?"...":"Send"}</Btn>
       </div>
     </div>
   );
