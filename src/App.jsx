@@ -1632,101 +1632,333 @@ function AIAdvisor({ monthlyData, goals, loans, activeMonth, activeYear, theme, 
   const T   = THEMES[theme];
   const IS2 = iStyle(T);
 
-  const [msgs,    setMsgs   ] = useState([{
-    role:"assistant",
-    content:"Hi! I am your Vatsu AI Advisor, powered by Google Gemini.\n\nI know your real financial data and give you personalised advice - completely free!\n\nTry asking:\n- How can I save more this month?\n- Where am I overspending?\n- What is my financial health?\n- How to build an emergency fund?\n- Tell me about my goals"
-  }]);
+  const [msgs,    setMsgs   ] = useState([]);
   const [input,   setInput  ] = useState("");
   const [loading, setLoading] = useState(false);
-  const [status,  setStatus ] = useState("idle");
   const bottom = useRef(null);
   useEffect(() => { bottom.current?.scrollIntoView({ behavior:"smooth" }); }, [msgs]);
 
+  /* ── Compute financial context ── */
   const catBreak = allCats
-    .map(c => ({ label:c.label, icon:c.icon||"", spent: curMonth.expenses.filter(e=>e.category===c.id).reduce((s,e)=>s+e.amount,0) }))
+    .map(c => ({ ...c, spent: curMonth.expenses.filter(e=>e.category===c.id).reduce((s,e)=>s+e.amount,0) }))
     .filter(c => c.spent > 0)
     .sort((a,b) => b.spent - a.spent);
 
   const totalEMI = loans.reduce((s,l) => {
-    const start = l.startYear*12+l.startMonth;
-    const cur   = activeYear*12+activeMonth;
-    return cur>=start && cur<start+(l.tenureMonths||9999) ? s+l.emi : s;
+    const st = l.startYear*12+l.startMonth, cu = activeYear*12+activeMonth;
+    return cu>=st && cu<st+(l.tenureMonths||9999) ? s+l.emi : s;
   }, 0);
 
-  const remaining   = totalInc - totalExp - totalEMI;
-  const savePct     = totalInc > 0 ? Math.round(Math.max(0,(totalInc-totalExp-totalEMI)/totalInc*100)) : 0;
-  const pendingGoals= goals.filter(g => g.saved < g.target);
-  const nearDeadline= goals.filter(g => {
+  const remaining  = totalInc - totalExp - totalEMI;
+  const savePct    = totalInc > 0 ? Math.round(Math.max(0, remaining/totalInc*100)) : 0;
+  const spentPct   = totalInc > 0 ? Math.round((totalExp/totalInc)*100) : 0;
+  const topCat     = catBreak[0];
+  const foodAmt    = catBreak.find(c=>c.id==="food")?.spent || 0;
+  const subAmt     = catBreak.find(c=>c.id==="subscriptions")?.spent || 0;
+  const shopAmt    = catBreak.find(c=>c.id==="shopping")?.spent || 0;
+  const transAmt   = catBreak.find(c=>c.id==="transport")?.spent || 0;
+  const savingsAmt = catBreak.find(c=>c.id==="savings")?.spent || 0;
+  const hasData    = totalInc > 0 || totalExp > 0;
+
+  /* Month-over-month */
+  const prevKey  = activeMonth===0 ? (activeYear-1)+"-11" : activeYear+"-"+(activeMonth-1);
+  const prevData = monthlyData[prevKey];
+  const prevExp  = prevData ? prevData.expenses.reduce((s,e)=>s+e.amount,0) : 0;
+  const momDelta = prevExp>0 ? Math.round(((totalExp-prevExp)/prevExp)*100) : null;
+
+  /* Goals */
+  const pendingGoals  = goals.filter(g=>g.saved<g.target);
+  const completedGoals= goals.filter(g=>g.saved>=g.target);
+  const nearDeadline  = goals.filter(g=>{
     if(!g.deadline) return false;
-    const days = Math.ceil((new Date(g.deadline)-new Date())/(1000*60*60*24));
-    return days>0 && days<=90;
+    const d = Math.ceil((new Date(g.deadline)-new Date())/(864e5));
+    return d>0 && d<=90;
   });
+  const emergencyGoal = goals.find(g=>g.label.toLowerCase().includes("emergency"));
 
-  async function send() {
-    const q = input.trim();
-    if (!q || loading) return;
-    setMsgs(p => [...p, { role:"user", content:q }]);
-    setInput("");
-    setLoading(true);
-    setStatus("idle");
+  /* ════════════════════════════════════════
+     RULE ENGINE
+  ════════════════════════════════════════ */
+  function analyse(question) {
+    const q = question.toLowerCase().trim();
+    const month = MONTHS[activeMonth];
 
-    const context = [
-      "You are Vatsu AI Financial Advisor - a warm, knowledgeable Indian personal finance expert.",
-      "Respond in a friendly, direct, actionable tone. Use rupee symbol and Indian lakh/crore format.",
-      "Keep responses under 180 words. End with one specific action the user can take today.",
-      "",
-      "User financial snapshot for " + MONTHS[activeMonth] + ":",
-      "Income: " + fmtINR(totalInc),
-      "Total Expenses: " + fmtINR(totalExp),
-      "EMI Payments: " + fmtINR(totalEMI),
-      "Remaining Balance: " + fmtINR(remaining),
-      "Savings Rate: " + savePct + "%",
-      catBreak.length > 0
-        ? "Spending by category: " + catBreak.map(c=>c.label+"="+fmtINR(c.spent)).join(", ")
-        : "No expenses recorded yet",
-      "Active Loans: " + loans.length,
-      "Savings Goals: " + goals.length + " total, " + pendingGoals.length + " in progress",
-      nearDeadline.length > 0
-        ? "Goals with deadline within 90 days: " + nearDeadline.map(g=>g.label).join(", ")
-        : "",
-      "",
-      "Recent conversation:",
-      ...msgs.slice(-4).map(m => (m.role==="user"?"User: ":"Advisor: ") + m.content),
-    ].filter(Boolean).join("\n");
-
-    try {
-      const res = await fetch("/api/chat", {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ message:q, context }),
-      });
-      if (!res.ok) {
-        const e = await res.json().catch(()=>({}));
-        throw new Error(e.error || "Server error " + res.status);
-      }
-      const data = await res.json();
-      if (!data.reply) throw new Error("Empty response");
-      setMsgs(p => [...p, { role:"assistant", content:data.reply }]);
-      setStatus("ok");
-    } catch(err) {
-      const is404 = err.message.includes("404") || err.message.includes("fetch") || err.message.includes("Failed") || err.message.includes("Network");
-      const errMsg = is404
-        ? "To activate the AI Advisor:\n\n1. Add the api/chat.js file to your GitHub repo root\n2. Add GEMINI_API_KEY in Vercel Environment Variables\n3. Redeploy\n\nThe api/chat.js file was provided alongside this app. After setup, the AI works for you and all your friends for free!"
-        : "Error: " + err.message + "\n\nCheck that GEMINI_API_KEY is set in Vercel and api/chat.js exists in your repo.";
-      setMsgs(p => [...p, { role:"assistant", content:errMsg }]);
-      setStatus("error");
+    /* ── NO DATA ── */
+    if (!hasData) {
+      return "📊 No data yet for " + month + "!\n\nTo get personalised advice:\n1. Go to Dashboard\n2. Tap + Add Income\n3. Add your expenses\n4. Come back and ask me anything!\n\nI can help with saving tips, budget planning, goal tracking, loan analysis and more — all based on your real numbers.";
     }
-    setLoading(false);
+
+    /* ── SAVINGS ── */
+    if (/sav(e|ing|ings)|how much (can|should) i save|increase saving/.test(q)) {
+      const needed = Math.max(0, totalInc*0.20 - savingsAmt);
+      const lines = ["💰 Savings Analysis — " + month + "\n"];
+      if (savePct >= 20) {
+        lines.push("🌟 Excellent! You're saving " + savePct + "% of income — above the 20% target!");
+      } else if (savePct >= 10) {
+        lines.push("🟡 You're saving " + savePct + "% — getting there. You need " + fmtINR(Math.round(needed)) + " more to hit 20%.");
+      } else {
+        lines.push("🔴 You're saving only " + savePct + "% — well below the 20% target.");
+        lines.push("Gap to reach 20%: " + fmtINR(Math.round(needed)));
+      }
+      lines.push("\nTop ways to save more:");
+      if (foodAmt > totalInc*0.20) lines.push("• Cut food spending by 20% → save " + fmtINR(Math.round(foodAmt*0.2)) + "/month");
+      if (subAmt > 0) lines.push("• Cancel unused subscriptions → " + fmtINR(subAmt) + "/month freed up");
+      if (shopAmt > totalInc*0.15) lines.push("• Reduce shopping by 25% → save " + fmtINR(Math.round(shopAmt*0.25)));
+      lines.push("• Pay yourself first — transfer savings on salary day before spending");
+      lines.push("\n💡 Use the Goals tab to track your savings targets automatically.");
+      return lines.join("\n");
+    }
+
+    /* ── OVERSPENDING / WHERE IS MONEY GOING ── */
+    if (/overspend|where.*money|where.*spend|spend.*most|biggest expense|top expense/.test(q)) {
+      const lines = ["📊 Spending Breakdown — " + month + "\n"];
+      lines.push("Income: " + fmtINR(totalInc) + " | Spent: " + fmtINR(totalExp) + " (" + spentPct + "%) | Left: " + fmtINR(remaining) + "\n");
+      catBreak.slice(0,6).forEach((c,i) => {
+        const pct = totalInc>0 ? Math.round((c.spent/totalInc)*100) : 0;
+        const bar = "█".repeat(Math.min(10,Math.round(pct/3))) + "░".repeat(Math.max(0,10-Math.round(pct/3)));
+        lines.push((i===0?"🔴 ":"   ") + c.icon+" "+c.label+": "+fmtINR(c.spent)+" ("+pct+"%)\n   "+bar);
+      });
+      if (topCat) {
+        lines.push("\n" + (topCat.spent>totalInc*0.35?"⚠️ ":"✅ ") + topCat.label + " is your biggest expense" + (topCat.spent>totalInc*0.35?" — consider a budget limit for it.":". Looks manageable."));
+      }
+      if (momDelta!==null) {
+        lines.push("\n" + (momDelta>0?"📈":"📉") + " Spending is " + Math.abs(momDelta) + "% " + (momDelta>0?"higher":"lower") + " than last month (" + fmtINR(prevExp) + " → " + fmtINR(totalExp) + ").");
+      }
+      return lines.join("\n");
+    }
+
+    /* ── BUDGET ── */
+    if (/budget|limit|allocat|50.30.20|rule/.test(q)) {
+      const lines = ["📐 Budget Recommendations — Based on " + fmtINR(totalInc) + " income\n"];
+      lines.push("Using the 50/30/20 rule:\n");
+      const recs = [
+        ["Needs (Rent+Food+Transport)", Math.round(totalInc*0.50), "🏠"],
+        ["Wants (Shopping+Entertainment)", Math.round(totalInc*0.30), "🛍️"],
+        ["Savings+Investments", Math.round(totalInc*0.20), "💰"],
+      ];
+      recs.forEach(([l,v,i]) => lines.push(i+" "+l+": "+fmtINR(v)));
+      lines.push("\nCategory-specific suggestions:");
+      if (foodAmt>0)  lines.push("🍜 Food: Budget "+fmtINR(Math.round(totalInc*0.15))+" (15%). Current: "+fmtINR(foodAmt));
+      if (transAmt>0) lines.push("🚗 Transport: Budget "+fmtINR(Math.round(totalInc*0.10))+" (10%). Current: "+fmtINR(transAmt));
+      if (subAmt>0)   lines.push("🔄 Subscriptions: Budget "+fmtINR(Math.round(totalInc*0.05))+" (5%). Current: "+fmtINR(subAmt));
+      if (shopAmt>0)  lines.push("🛍️ Shopping: Budget "+fmtINR(Math.round(totalInc*0.10))+" (10%). Current: "+fmtINR(shopAmt));
+      lines.push("\n💡 Click ⚙ Budgets in the Dashboard to set limits. Vatsu alerts you at 90%.");
+      return lines.join("\n");
+    }
+
+    /* ── EMERGENCY FUND ── */
+    if (/emergency|fund|crisis|rainy day|cushion/.test(q)) {
+      const target  = totalExp>0 ? totalExp*6 : 300000;
+      const current = emergencyGoal ? emergencyGoal.saved : 0;
+      const pct     = target>0 ? Math.round((current/target)*100) : 0;
+      const monthly = Math.round(totalExp*0.10);
+      const months  = current<target ? Math.ceil((target-current)/Math.max(monthly,1)) : 0;
+      const lines   = ["🛡️ Emergency Fund Analysis\n"];
+      lines.push("Ideal target (6× monthly expenses): " + fmtINR(Math.round(target)));
+      if (emergencyGoal) {
+        lines.push("Your progress: " + fmtINR(current) + " (" + pct + "%)");
+        const barLen = Math.round(pct/10);
+        lines.push("["+"█".repeat(barLen)+"░".repeat(10-barLen)+"] "+pct+"%");
+      } else {
+        lines.push("❌ No emergency fund goal found in Goals tab.");
+      }
+      if (current >= target) {
+        lines.push("\n✅ Fully funded! You're protected against 6 months of expenses.");
+      } else {
+        lines.push("\nStill needed: " + fmtINR(Math.round(target-current)));
+        lines.push("At " + fmtINR(monthly) + "/month (10% of expenses) → funded in " + months + " months");
+        lines.push("\n💡 Create a goal named 'Emergency Fund' with target " + fmtINR(Math.round(target)) + " in the Goals tab.");
+      }
+      return lines.join("\n");
+    }
+
+    /* ── FOOD ── */
+    if (/food|dining|eat|restaurant|swiggy|zomato|cook/.test(q)) {
+      if (foodAmt===0) return "No food expenses in " + month + " yet. Add them in the Dashboard to get a food spending analysis!";
+      const ideal = Math.round(totalInc*0.15);
+      const over  = foodAmt - ideal;
+      const lines = ["🍜 Food & Dining — " + month + "\n"];
+      lines.push("Spent: " + fmtINR(foodAmt) + " | Ideal (15%): " + fmtINR(ideal));
+      lines.push(over>0 ? "Over by: " + fmtINR(over) + " ⚠️" : "✅ Within ideal range!");
+      if (over > 0) {
+        lines.push("\nWays to cut food costs:");
+        lines.push("• Meal prep on Sunday — saves ₹2,000–₹4,000/month");
+        lines.push("• Use food apps only on weekends");
+        lines.push("• Cook breakfast and lunch at home");
+        lines.push("• Buy groceries weekly, not daily");
+        lines.push("\n💡 Try the 'No Eating Out Week' challenge — it could save you " + fmtINR(Math.round(foodAmt*0.4)) + " this month!");
+      }
+      return lines.join("\n");
+    }
+
+    /* ── LOANS / EMI ── */
+    if (/loan|emi|debt|borrow|repay|bank/.test(q)) {
+      if (loans.length===0) return "No loans recorded yet. Add them in the 🏦 Loans tab to track EMIs and see their impact on your monthly balance.";
+      const emiPct = totalInc>0 ? Math.round((totalEMI/totalInc)*100) : 0;
+      const status = emiPct<=30 ? "✅ Healthy (under 30%)" : emiPct<=40 ? "⚠️ High (30-40%)" : "🔴 Very High (above 40%)";
+      const lines  = ["🏦 Loan Analysis\n"];
+      lines.push("Active loans: " + loans.length);
+      lines.push("Total monthly EMI: " + fmtINR(totalEMI) + " (" + emiPct + "% of income)");
+      lines.push("EMI burden: " + status);
+      lines.push("\nLoan breakdown:");
+      loans.forEach(l => lines.push("• " + l.bankName + " " + l.loanType + ": " + fmtINR(l.emi) + "/month"));
+      if (emiPct>30) {
+        lines.push("\n💡 Priority order for prepayment: Personal Loan > Gold Loan > Car Loan > Home Loan");
+        lines.push("Even ₹5,000 extra/month on a personal loan significantly reduces total interest.");
+      } else {
+        lines.push("\n✅ Your EMI burden is manageable. Pay on time to maintain a good credit score.");
+      }
+      return lines.join("\n");
+    }
+
+    /* ── GOALS ── */
+    if (/goal|target|dream|achieve|milestone|saving for/.test(q)) {
+      if (goals.length===0) return "No savings goals yet! Go to the 🎯 Goals tab and add goals like:\n• Emergency Fund\n• Vacation\n• New phone or laptop\n• Down payment\n\nEvery contribution is tracked automatically and deducted from your monthly balance.";
+      const lines = ["🎯 Your Goals Summary\n"];
+      lines.push("Total: " + goals.length + " | Completed: " + completedGoals.length + " | In Progress: " + pendingGoals.length + "\n");
+      goals.forEach(g => {
+        const pct  = Math.min(100,Math.round((g.saved/g.target)*100));
+        const bar  = "█".repeat(Math.round(pct/10))+"░".repeat(10-Math.round(pct/10));
+        const done = g.saved>=g.target;
+        lines.push((done?"✅ ":"🎯 ") + g.label);
+        lines.push("   " + fmtINR(g.saved) + " / " + fmtINR(g.target) + " ["+bar+"] "+pct+"%");
+        if (g.deadline && !done) {
+          const days = Math.ceil((new Date(g.deadline)-new Date())/864e5);
+          lines.push("   " + (days<0?"⏰ Overdue!":days<=30?"⚠️ Due in "+days+" days":"📅 "+days+" days left"));
+        }
+      });
+      if (nearDeadline.length>0) lines.push("\n⚡ Urgent: " + nearDeadline.map(g=>g.label).join(", ") + " due within 90 days!");
+      lines.push("\n💡 Use the Contribute button on each goal to add money — it automatically records as an expense.");
+      return lines.join("\n");
+    }
+
+    /* ── HEALTH / SCORE ── */
+    if (/health|score|performance|doing|overall|summary|report/.test(q)) {
+      const grade  = savePct>=20?"A":savePct>=15?"B+":savePct>=10?"B":"C";
+      const issues = [];
+      if (savePct<10)              issues.push("📈 Boost savings rate from "+savePct+"% to at least 20%");
+      if (totalEMI>totalInc*0.35)  issues.push("🏦 EMI burden is "+Math.round(totalEMI/totalInc*100)+"% — try to keep under 30%");
+      if (topCat&&topCat.spent>totalInc*0.35) issues.push("💸 "+topCat.label+" ("+fmtINR(topCat.spent)+") needs a budget limit");
+      if (!emergencyGoal)          issues.push("🛡️ Set up an Emergency Fund goal");
+      if (pendingGoals.length===0 && goals.length===0) issues.push("🎯 Create savings goals to build wealth");
+      const lines = ["📊 Financial Health Report — " + month + "\n"];
+      lines.push("Grade: "+grade+" | Savings Rate: "+savePct+"% | Spent: "+spentPct+"% of income");
+      lines.push("Income: "+fmtINR(totalInc)+" | Expenses: "+fmtINR(totalExp)+" | Remaining: "+fmtINR(remaining));
+      if (momDelta!==null) lines.push("vs Last Month: "+(momDelta>0?"+":"")+momDelta+"%");
+      if (issues.length>0) {
+        lines.push("\nAreas to improve:");
+        issues.forEach(i=>lines.push(i));
+      } else {
+        lines.push("\n🌟 You're in excellent financial shape! Keep it up.");
+      }
+      lines.push("\n💡 Check the Insights tab for detailed charts and month-over-month comparisons.");
+      return lines.join("\n");
+    }
+
+    /* ── INVEST ── */
+    if (/invest|sip|mutual fund|stock|equity|nifty|sensex|return/.test(q)) {
+      const surplus = Math.max(0, remaining);
+      const lines = ["📈 Investment Guidance\n"];
+      if (surplus>0) lines.push("Available to invest: " + fmtINR(surplus) + "/month\n");
+      lines.push("Recommended beginner approach:");
+      lines.push("1. Build Emergency Fund first (" + fmtINR(Math.round(totalExp*6)) + " target)");
+      lines.push("2. Start SIP in Nifty 50 Index Fund — even ₹1,000/month");
+      lines.push("3. Increase SIP by 10% every year\n");
+      lines.push("Quick maths:");
+      lines.push("₹3,000/month SIP × 15 years @ 12% = ~₹30 Lakhs");
+      lines.push("₹5,000/month SIP × 15 years @ 12% = ~₹50 Lakhs");
+      lines.push("₹10,000/month SIP × 15 years @ 12% = ~₹1 Crore\n");
+      lines.push("⚠️ This is general guidance. Consult a SEBI-registered advisor for personalised plans.");
+      return lines.join("\n");
+    }
+
+    /* ── SUBSCRIPTIONS ── */
+    if (/subscription|netflix|ott|spotify|cancel|streaming/.test(q)) {
+      const lines = ["🔄 Subscription Audit\n"];
+      if (subAmt>0) {
+        lines.push("Current spend: " + fmtINR(subAmt) + "/month = " + fmtINR(subAmt*12) + "/year");
+        lines.push("That's " + Math.round((subAmt/totalInc)*100) + "% of your income on subscriptions.\n");
+      }
+      lines.push("How to audit:");
+      lines.push("1. List every subscription with cost");
+      lines.push("2. Check last login date for each");
+      lines.push("3. Cancel anything unused in 30 days");
+      lines.push("4. Switch to annual plans (saves 20–40%)");
+      lines.push("5. Share family plans where possible\n");
+      lines.push("💡 Try the Subscription Slayer challenge in the 🏆 Challenges tab!");
+      return lines.join("\n");
+    }
+
+    /* ── CHALLENGE / TIPS ── */
+    if (/tip|trick|challeng|advice|improve|better|habit/.test(q)) {
+      const lines = ["💡 Top Financial Tips for " + month + "\n"];
+      lines.push("1. 50/30/20 Rule — Needs ≤50% · Wants ≤30% · Savings ≥20%");
+      lines.push("2. Pay yourself first — save before you spend");
+      lines.push("3. 24-hour rule — wait a day before any ₹500+ purchase");
+      lines.push("4. Track every rupee — log expenses daily in the Dashboard");
+      lines.push("5. Review weekly — 5 mins every Sunday checking your heatmap");
+      lines.push("6. Automate savings — set a standing instruction on salary day");
+      lines.push("7. Challenge yourself — try a No-Spend week this month\n");
+      lines.push("What I can help you with:");
+      lines.push("• 'How can I save more?' → Personalised savings plan");
+      lines.push("• 'Where am I overspending?' → Category breakdown");
+      lines.push("• 'Review my goals' → Goal progress analysis");
+      lines.push("• 'How are my loans?' → EMI health check");
+      lines.push("• 'What is my financial health?' → Full report");
+      lines.push("• 'How to invest?' → Beginner investment guide");
+      return lines.join("\n");
+    }
+
+    /* ── INCOME ── */
+    if (/income|salary|earn|revenue|source/.test(q)) {
+      const lines = ["💵 Income Analysis — " + month + "\n"];
+      const srcs = curMonth.incomeSources;
+      if (srcs.length===0) return "No income recorded for "+month+". Go to Dashboard → + Add Income to add your salary and other sources.";
+      lines.push("Total income: " + fmtINR(totalInc));
+      lines.push("Sources: " + srcs.length + "\n");
+      srcs.forEach(s => lines.push("💼 " + s.label + ": " + fmtINR(s.amount)));
+      lines.push("\nIncome allocation:");
+      lines.push("→ Expenses: " + fmtINR(totalExp) + " (" + spentPct + "%)");
+      lines.push("→ EMI: " + fmtINR(totalEMI));
+      lines.push("→ Remaining: " + fmtINR(remaining) + " (" + savePct + "%)");
+      if (momDelta!==null&&prevData) {
+        const prevInc = prevData.incomeSources?.reduce((s,x)=>s+x.amount,0)||0;
+        if (prevInc>0) lines.push("\nvs Last Month: " + (totalInc>=prevInc?"📈 Up "+fmtINR(totalInc-prevInc):"📉 Down "+fmtINR(prevInc-totalInc)));
+      }
+      return lines.join("\n");
+    }
+
+    /* ── GREETING ── */
+    if (/^(hi|hello|hey|namaste|helo|hii)/.test(q)) {
+      return "👋 Namaste! I'm your Vatsu AI Advisor.\n\nI can see your " + month + " data:\n• Income: " + fmtINR(totalInc) + "\n• Spent: " + fmtINR(totalExp) + " (" + spentPct + "%)\n• Remaining: " + fmtINR(remaining) + "\n• Savings Rate: " + savePct + "%\n\nAsk me anything:\n• How can I save more?\n• Where am I overspending?\n• Review my goals\n• How are my loans?\n• What is my financial health?";
+    }
+
+    /* ── DEFAULT CATCH-ALL ── */
+    return "I analysed your " + month + " finances:\n• Income: " + fmtINR(totalInc) + "\n• Spent: " + fmtINR(totalExp) + " (" + spentPct + "%)\n• Remaining: " + fmtINR(remaining) + "\n• Savings Rate: " + savePct + "%\n" + (topCat?"• Top expense: "+topCat.icon+" "+topCat.label+" ("+fmtINR(topCat.spent)+")\n":"") + "\nTry asking:\n• How can I save more?\n• Where am I overspending?\n• What is my financial health?\n• Review my goals\n• How are my loans?\n• Emergency fund advice\n• Investment tips";
   }
 
-  const quickQ = ["How can I save more?","Where am I overspending?","What is my financial health?","Emergency fund advice","Review my goals","How are my loans?"];
+  function send() {
+    const q = input.trim();
+    if (!q || loading) return;
+    const userMsg = { role:"user", content:q };
+    setMsgs(p => [...p, userMsg]);
+    setInput("");
+    setLoading(true);
+    setTimeout(() => {
+      const reply = analyse(q);
+      setMsgs(p => [...p, { role:"assistant", content:reply }]);
+      setLoading(false);
+    }, 500);
+  }
+
+  const quickQ = ["How can I save more?","Where am I overspending?","What is my financial health?","Emergency fund advice","Review my goals","How are my loans?","Investment tips","Food spending tips"];
 
   function MsgText({ text, isUser }) {
-    if(isUser) return <span style={{fontSize:13,fontFamily:BODY,fontWeight:600}}>{text}</span>;
+    if (isUser) return <span style={{fontSize:13,fontFamily:BODY,fontWeight:600}}>{text}</span>;
     return (
       <div style={{fontSize:13,fontFamily:BODY,lineHeight:1.75}}>
         {text.split("\n").map((line,i) => {
-          if(!line.trim()) return <div key={i} style={{height:5}}/>;
+          if (!line.trim()) return <div key={i} style={{height:5}}/>;
           const parts = line.split(/(\*\*[^*]+\*\*)/g).map((p,j) =>
             p.startsWith("**")&&p.endsWith("**")
               ? <strong key={j} style={{color:T.textBright}}>{p.slice(2,-2)}</strong>
@@ -1738,47 +1970,86 @@ function AIAdvisor({ monthlyData, goals, loans, activeMonth, activeYear, theme, 
     );
   }
 
+  /* Welcome message shown before first send */
+  const showWelcome = msgs.length===0;
+
   return (
-    <div style={{display:"flex",flexDirection:"column",height:540,background:T.cardGrad,border:"1px solid "+T.border,borderRadius:20,overflow:"hidden"}}>
+    <div style={{display:"flex",flexDirection:"column",height:560,background:T.cardGrad,border:"1px solid "+T.border,borderRadius:20,overflow:"hidden"}}>
+
+      {/* Header */}
       <div style={{padding:"14px 18px",background:theme==="dark"?"linear-gradient(135deg,#060f1c,#04090f)":"linear-gradient(135deg,#0d2340,#1a3a62)",borderBottom:"1px solid "+T.border}}>
         <div style={{display:"flex",alignItems:"center",gap:12}}>
           <div style={{width:40,height:40,borderRadius:"50%",background:"linear-gradient(135deg,#1dd1a1,#0abf8a)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,boxShadow:"0 0 16px #1dd1a155",flexShrink:0}}>🤖</div>
           <div style={{flex:1}}>
             <div style={{fontWeight:700,color:"#f0f8ff",fontFamily:TF,fontSize:15}}>Vatsu AI Advisor</div>
-            <div style={{fontSize:11,color:"#1dd1a1",fontFamily:BODY,marginTop:1}}>Powered by Google Gemini · Free · Works for everyone</div>
+            <div style={{fontSize:11,color:"#1dd1a1",fontFamily:BODY,marginTop:1}}>Smart Finance Engine · Works Everywhere · 100% Free · No API needed</div>
           </div>
-          <div style={{padding:"4px 10px",borderRadius:20,fontSize:10,fontFamily:BODY,fontWeight:700,background:status==="ok"?"#1dd1a122":status==="error"?"#ff6b6b22":"#54a0ff22",color:status==="ok"?"#1dd1a1":status==="error"?"#ff6b6b":"#54a0ff",border:"1px solid "+(status==="ok"?"#1dd1a144":status==="error"?"#ff6b6b44":"#54a0ff44")}}>
-            {status==="ok"?"Gemini Live":status==="error"?"Setup Needed":"Gemini"}
-          </div>
-        </div>
-        <div style={{marginTop:9,padding:"7px 12px",background:"#54a0ff12",border:"1px solid #54a0ff33",borderRadius:9,fontSize:11,color:"#54a0ff",fontFamily:BODY,lineHeight:1.6}}>
-          Setup: Add <b>api/chat.js</b> to GitHub repo + set <b>GEMINI_API_KEY</b> in Vercel → Redeploy. Then AI works for everyone!
+          <div style={{padding:"4px 12px",borderRadius:20,background:"#1dd1a122",border:"1px solid #1dd1a144",fontSize:10,color:"#1dd1a1",fontFamily:BODY,fontWeight:700}}>LIVE</div>
         </div>
       </div>
-      <div style={{flex:1,overflowY:"auto",padding:"14px 16px",display:"flex",flexDirection:"column",gap:12}}>
-        {msgs.map((m,i) => (
-          <div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start",gap:8}}>
-            {m.role==="assistant"&&<div style={{width:28,height:28,borderRadius:"50%",background:"linear-gradient(135deg,#1dd1a1,#0abf8a)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,flexShrink:0,marginTop:2}}>🤖</div>}
-            <div style={{maxWidth:"82%",padding:"11px 14px",borderRadius:m.role==="user"?"18px 18px 4px 18px":"18px 18px 18px 4px",background:m.role==="user"?"linear-gradient(135deg,#1dd1a1,#0abf8a)":theme==="dark"?"linear-gradient(135deg,#0b1825,#071018)":"#f0f6ff",color:m.role==="user"?"#02080f":T.text,border:m.role==="assistant"?"1px solid "+T.border2:"none",boxShadow:m.role==="user"?"0 4px 14px #1dd1a133":"0 2px 8px #00000022"}}>
-              <MsgText text={m.content} isUser={m.role==="user"}/>
+
+      {/* Welcome screen */}
+      {showWelcome && (
+        <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"24px 20px",gap:16}}>
+          <div style={{fontSize:48}}>🤖</div>
+          <div style={{textAlign:"center"}}>
+            <div style={{fontSize:17,fontWeight:800,color:T.textBright,fontFamily:TF,marginBottom:6}}>Your Personal Finance Advisor</div>
+            <div style={{fontSize:13,color:T.textSub,fontFamily:BODY,lineHeight:1.7,maxWidth:340}}>
+              I know your real financial data and give you instant, personalised advice — completely offline, no internet needed.
             </div>
           </div>
-        ))}
-        {loading&&<div style={{display:"flex",alignItems:"center",gap:8}}>
-          <div style={{width:28,height:28,borderRadius:"50%",background:"linear-gradient(135deg,#1dd1a1,#0abf8a)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,flexShrink:0}}>🤖</div>
-          <div style={{display:"flex",gap:5,padding:"12px 16px",background:theme==="dark"?"#0b1825":"#f0f6ff",borderRadius:"18px 18px 18px 4px",border:"1px solid "+T.border2}}>
-            {[0,1,2].map(i=><div key={i} style={{width:8,height:8,borderRadius:"50%",background:"#1dd1a1",animation:"vPulse 1.2s "+(i*0.2)+"s infinite"}}/>)}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,width:"100%",maxWidth:340}}>
+            {["💰 Savings plan","📊 Spending analysis","🎯 Goal review","🏦 Loan health","💡 Budget tips","📈 Investment basics"].map(chip=>(
+              <div key={chip} style={{padding:"8px 12px",background:T.surface3,border:"1px solid "+T.border,borderRadius:10,fontSize:12,color:T.textSub,fontFamily:BODY,textAlign:"center",cursor:"pointer"}}
+                onClick={()=>{ setInput(chip.replace(/^[^\s]+\s/,"")); }}>
+                {chip}
+              </div>
+            ))}
           </div>
-        </div>}
-        <div ref={bottom}/>
-      </div>
+          <div style={{fontSize:12,color:T.textMuted,fontFamily:BODY}}>Type a question or pick a topic above ↑</div>
+        </div>
+      )}
+
+      {/* Messages */}
+      {!showWelcome && (
+        <div style={{flex:1,overflowY:"auto",padding:"14px 16px",display:"flex",flexDirection:"column",gap:12}}>
+          {msgs.map((m,i) => (
+            <div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start",gap:8}}>
+              {m.role==="assistant"&&<div style={{width:28,height:28,borderRadius:"50%",background:"linear-gradient(135deg,#1dd1a1,#0abf8a)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,flexShrink:0,marginTop:2}}>🤖</div>}
+              <div style={{maxWidth:"82%",padding:"11px 14px",borderRadius:m.role==="user"?"18px 18px 4px 18px":"18px 18px 18px 4px",background:m.role==="user"?"linear-gradient(135deg,#1dd1a1,#0abf8a)":theme==="dark"?"linear-gradient(135deg,#0b1825,#071018)":"#f0f6ff",color:m.role==="user"?"#02080f":T.text,border:m.role==="assistant"?"1px solid "+T.border2:"none",boxShadow:m.role==="user"?"0 4px 14px #1dd1a133":"0 2px 8px #00000022"}}>
+                <MsgText text={m.content} isUser={m.role==="user"}/>
+              </div>
+            </div>
+          ))}
+          {loading&&(
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <div style={{width:28,height:28,borderRadius:"50%",background:"linear-gradient(135deg,#1dd1a1,#0abf8a)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,flexShrink:0}}>🤖</div>
+              <div style={{display:"flex",gap:5,padding:"12px 16px",background:theme==="dark"?"#0b1825":"#f0f6ff",borderRadius:"18px 18px 18px 4px",border:"1px solid "+T.border2}}>
+                {[0,1,2].map(i=><div key={i} style={{width:8,height:8,borderRadius:"50%",background:"#1dd1a1",animation:"vPulse 1.2s "+(i*0.2)+"s infinite"}}/>)}
+              </div>
+            </div>
+          )}
+          <div ref={bottom}/>
+        </div>
+      )}
+
+      {/* Quick chips */}
       <div style={{padding:"8px 14px 4px",display:"flex",gap:6,overflowX:"auto",borderTop:"1px solid "+T.border}}>
-        {quickQ.map(q=><button key={q} onClick={()=>setInput(q)} style={{whiteSpace:"nowrap",padding:"5px 12px",borderRadius:18,border:"1px solid "+T.border,background:"transparent",color:T.textSub,fontSize:11,cursor:"pointer",fontFamily:BODY}}>{q}</button>)}
+        {quickQ.map(q=>(
+          <button key={q} onClick={()=>setInput(q)} style={{whiteSpace:"nowrap",padding:"5px 12px",borderRadius:18,border:"1px solid "+T.border,background:"transparent",color:T.textSub,fontSize:11,cursor:"pointer",fontFamily:BODY,transition:"all .15s"}}
+            onMouseEnter={e=>{e.target.style.borderColor="#1dd1a1";e.target.style.color="#1dd1a1";}}
+            onMouseLeave={e=>{e.target.style.borderColor=T.border;e.target.style.color=T.textSub;}}>
+            {q}
+          </button>
+        ))}
       </div>
+
+      {/* Input */}
       <div style={{padding:"10px 14px",borderTop:"1px solid "+T.border,display:"flex",gap:8}}>
-        <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&send()} placeholder="Ask about your finances..." style={{...IS2,flex:1,padding:"10px 14px"}}/>
-        <Btn v="primary" onClick={send} sx={{padding:"10px 18px",whiteSpace:"nowrap",opacity:loading?0.6:1}}>{loading?"...":"Send"}</Btn>
+        <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&send()} placeholder="Ask anything about your finances..." style={{...IS2,flex:1,padding:"10px 14px"}}/>
+        <Btn v="primary" onClick={send} sx={{padding:"10px 18px",whiteSpace:"nowrap",opacity:loading?0.6:1}}>{loading?"...":"Ask"}</Btn>
       </div>
+
     </div>
   );
 }
