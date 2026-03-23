@@ -483,36 +483,57 @@ function QuickAdd({allCats,onAdd,activeMonth,activeYear}){
   );
 }
 
-/* ── INCOME CARD (persistent) ────────────────── */
+/* ── INCOME CARD (always editable) ──────────── */
 function IncomeCard({income,onSet,monthlyExpenses}){
-  const [editing,setEditing]=useState(false);
-  const [val,setVal]=useState(income);
+  const [val,setVal]=useState(income||"");
+  useEffect(()=>{ setVal(income||""); },[income]);
   const pct=income>0?Math.min((monthlyExpenses/income)*100,100):0;
   const col=pct>90?"#f43f5e":pct>70?"#f59e0b":"#06b6d4";
+  function handleChange(e){
+    setVal(e.target.value);
+    const n=Number(e.target.value);
+    if(n>=0) onSet(n);
+  }
   return(
-    <GC glow="#06b6d4" style={{borderTop:`3px solid #06b6d4`}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
-        <div>
-          <div style={{fontSize:11,color:"rgba(255,255,255,.45)",textTransform:"uppercase",letterSpacing:.6}}>Monthly Income</div>
-          {editing?(
-            <form onSubmit={e=>{e.preventDefault();onSet(Number(val));setEditing(false);}} style={{display:"flex",gap:6,marginTop:4}}>
-              <input autoFocus type="number" value={val} onChange={e=>setVal(e.target.value)} style={{width:130,padding:"6px 10px",borderRadius:10,border:"1px solid #06b6d4",background:"rgba(255,255,255,.08)",color:"#fff",fontSize:18,fontWeight:900,outline:"none"}}/>
-              <GBtn type="submit" style={{padding:"6px 12px",fontSize:12}}>✓</GBtn>
-            </form>
-          ):<Counter value={income} color="#06b6d4" size={28}/>}
+    <GC glow="#06b6d4" style={{borderTop:"3px solid #06b6d4"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+        <div style={{flex:1}}>
+          <div style={{fontSize:11,color:"rgba(255,255,255,.45)",textTransform:"uppercase",letterSpacing:.6,marginBottom:6}}>💰 Monthly Income</div>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <span style={{fontSize:20,fontWeight:700,color:"rgba(255,255,255,.5)"}}>₹</span>
+            <input
+              type="number"
+              value={val}
+              onChange={handleChange}
+              placeholder="Enter your income"
+              min="0"
+              style={{flex:1,maxWidth:220,padding:"8px 12px",borderRadius:11,border:"2px solid rgba(6,182,212,.5)",background:"rgba(6,182,212,.07)",color:"#fff",fontSize:20,fontWeight:900,outline:"none",transition:"border .2s",WebkitAppearance:"none",MozAppearance:"textfield"}}
+              onFocus={e=>e.target.style.borderColor="#06b6d4"}
+              onBlur={e=>e.target.style.borderColor="rgba(6,182,212,.5)"}
+            />
+            {income>0&&<span style={{fontSize:13,color:"rgba(255,255,255,.4)",whiteSpace:"nowrap"}}>/ month</span>}
+          </div>
+          {income===0&&<div style={{fontSize:11,color:"rgba(6,182,212,.7)",marginTop:5}}>👆 Type your monthly take-home salary above</div>}
         </div>
-        <button onClick={()=>setEditing(e=>!e)} style={{background:"rgba(6,182,212,.15)",border:"1px solid rgba(6,182,212,.3)",borderRadius:8,padding:"5px 10px",color:"#06b6d4",fontSize:11,fontWeight:700,cursor:"pointer"}}>
-          {editing?"Cancel":"✏️ Edit"}
-        </button>
+        {income>0&&(
+          <div style={{textAlign:"right",paddingLeft:12}}>
+            <div style={{fontSize:10,color:"rgba(255,255,255,.35)"}}>Remaining</div>
+            <div style={{fontSize:18,fontWeight:900,color:"#10b981"}}>{fmt(Math.max(0,income-monthlyExpenses))}</div>
+          </div>
+        )}
       </div>
-      <div style={{height:7,borderRadius:99,background:"rgba(255,255,255,.06)",overflow:"hidden",marginBottom:6}}>
-        <div style={{height:"100%",borderRadius:99,width:`${pct}%`,background:`linear-gradient(90deg,#06b6d4,${col})`,boxShadow:`0 0 10px ${col}66`,transition:"width 1s"}}/>
-      </div>
-      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"rgba(255,255,255,.4)"}}>
-        <span>Spent: <b style={{color:"#f43f5e"}}>{fmt(monthlyExpenses)}</b></span>
-        <span>Remaining: <b style={{color:"#10b981"}}>{fmt(Math.max(0,income-monthlyExpenses))}</b></span>
-        <span style={{color:col}}>{pct.toFixed(0)}% used</span>
-      </div>
+      {income>0&&(
+        <>
+          <div style={{height:7,borderRadius:99,background:"rgba(255,255,255,.06)",overflow:"hidden",marginBottom:6}}>
+            <div style={{height:"100%",borderRadius:99,width:pct+"%",background:"linear-gradient(90deg,#06b6d4,"+col+")",boxShadow:"0 0 10px "+col+"66",transition:"width 1s"}}/>
+          </div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"rgba(255,255,255,.4)"}}>
+            <span>Spent: <b style={{color:"#f43f5e"}}>{fmt(monthlyExpenses)}</b></span>
+            <span>Budget: <b style={{color:"#06b6d4"}}>{fmt(income)}</b></span>
+            <span style={{color:col}}>{pct.toFixed(0)}% used</span>
+          </div>
+        </>
+      )}
     </GC>
   );
 }
@@ -593,7 +614,7 @@ export default function Vatsu(){
   const [tab,setTab]=useState("dashboard");
   const [theme,setTheme]=useLS("v3_theme","dark");
   const [expenses,setExpenses]=useLS("v3_exp",[]);
-  const [income,setIncome]=useLS("v3_income",50000);
+  const [income,setIncome]=useLS("v3_income",0);
   const [goals,setGoals]=useLS("v3_goals",[]);
   const [loans,setLoans]=useLS("v3_loans",[]);
   const [challenges,setChallenges]=useLS("v3_challenges",DEFAULT_CHALLENGES);
