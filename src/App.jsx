@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 
-/* --- Responsive hook ------------------------------------------------- */
+/* ─── Responsive hook ───────────────────────────────────────────────── */
 function useIsMobile() {
   const [m, setM] = useState(() => typeof window !== "undefined" && window.innerWidth < 768);
   useEffect(() => {
@@ -11,7 +11,7 @@ function useIsMobile() {
   return m;
 }
 
-/* --- Constants ------------------------------------------------------- */
+/* ─── Constants ─────────────────────────────────────────────────────── */
 const CATS = [
   { id:"food",          label:"Food & Dining",         icon:"🍜", color:"#ff9f43" },
   { id:"transport",     label:"Transport & Fuel",      icon:"🚗", color:"#ffd32a" },
@@ -31,11 +31,11 @@ const THIS_MONTH = NOW.getMonth();
 const TODAY      = NOW.getDate();
 
 /* Font stack constants */
-const TF   = "Playfair Display, Georgia, serif";
-const BODY = "DM Sans, Helvetica Neue, sans-serif";
-const MONO = "DM Mono, Noto Sans Mono, Courier New, monospace";
+const TF   = "'Playfair Display', Georgia, serif";
+const BODY = "'DM Sans', 'Helvetica Neue', sans-serif";
+const MONO = "'DM Mono', 'Noto Sans Mono', 'Courier New', monospace";
 
-/* --- Theme ----------------------------------------------------------- */
+/* ─── Theme ─────────────────────────────────────────────────────────── */
 const THEMES = {
   dark: {
     bg:"#03080f", surface:"#0b1421", surface2:"#071018", surface3:"#111e2e",
@@ -59,7 +59,7 @@ const THEMES = {
   }
 };
 
-/* --- INR formatter (lakh grouping, proper Unicode rupee sign) -------- */
+/* ─── INR formatter (lakh grouping, proper Unicode rupee sign) ──────── */
 function fmtINR(n) {
   const val = n ?? 0;
   const neg = val < 0;
@@ -81,7 +81,7 @@ const uid  = () => Math.random().toString(36).slice(2, 9);
 const load = (k, fb) => { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : fb; } catch { return fb; } };
 const save = (k, v)  => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
 
-/* --- Animated number counter ----------------------------------------- */
+/* ─── Animated number counter ───────────────────────────────────────── */
 function AnimNum({ value }) {
   const [disp, setDisp] = useState(0);
   const raf = useRef(null);
@@ -108,9 +108,9 @@ function AnimNum({ value }) {
   );
 }
 
-/* --- Health score ----------------------------------------------------- */
+/* ─── Health score ───────────────────────────────────────────────────── */
 function calcHealth({ income, outflow, goals, savePct, budgets, expenses, history, allCats }) {
-  if (!income) return { score: 0, grade: " - ", color: "#4e7090", breakdown: [] };
+  if (!income) return { score: 0, grade: "—", color: "#4e7090", breakdown: [] };
   let score = 100;
   const bd = [];
   const cats = allCats || CATS;
@@ -145,7 +145,7 @@ function calcHealth({ income, outflow, goals, savePct, budgets, expenses, histor
   return { score, grade, color, breakdown: bd };
 }
 
-/* --- Donut chart ------------------------------------------------------ */
+/* ─── Donut chart ────────────────────────────────────────────────────── */
 function Donut({ segs, label, sub, theme }) {
   const [hov, setHov] = useState(null);
   const T = THEMES[theme];
@@ -200,7 +200,7 @@ function Donut({ segs, label, sub, theme }) {
   );
 }
 
-/* --- Trend bar (history chart) --------------------------------------- */
+/* ─── Trend bar (history chart) ─────────────────────────────────────── */
 function TrendBar({ label, income, expenses, maxVal, isActive, onClick }) {
   const [hov, setHov] = useState(false);
   const iP = maxVal > 0 ? (income / maxVal) * 100 : 0;
@@ -224,7 +224,7 @@ function TrendBar({ label, income, expenses, maxVal, isActive, onClick }) {
   );
 }
 
-/* --- Stat card -------------------------------------------------------- */
+/* ─── Stat card ──────────────────────────────────────────────────────── */
 function StatCard({ title, value, sub, accent, icon, extra, theme }) {
   const [hov, setHov] = useState(false);
   const T = THEMES[theme];
@@ -247,7 +247,7 @@ function StatCard({ title, value, sub, accent, icon, extra, theme }) {
   );
 }
 
-/* --- Modal ------------------------------------------------------------ */
+/* ─── Modal ──────────────────────────────────────────────────────────── */
 function Modal({ show, onClose, title, sub, children, wide }) {
   if (!show) return null;
   return (
@@ -264,17 +264,17 @@ function Modal({ show, onClose, title, sub, children, wide }) {
   );
 }
 
-/* --- Toast ------------------------------------------------------------ */
+/* ─── Toast ──────────────────────────────────────────────────────────── */
 function Toast({ show }) {
   return (
     <div style={{ position: "fixed", bottom: 26, right: 26, zIndex: 9999, background: "linear-gradient(135deg,#071510,#0a2018)", border: "1px solid #1dd1a144", borderRadius: 14, padding: "10px 18px", display: "flex", alignItems: "center", gap: 10, opacity: show ? 1 : 0, transform: show ? "translateY(0)" : "translateY(10px)", transition: "all .35s cubic-bezier(.34,1.56,.64,1)", pointerEvents: "none", boxShadow: "0 6px 24px #00000066" }}>
-      <div style={{ width: 20, height: 20, borderRadius: "50%", background: "#1dd1a1", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11 }}>v</div>
+      <div style={{ width: 20, height: 20, borderRadius: "50%", background: "#1dd1a1", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11 }}>✓</div>
       <span style={{ color: "#1dd1a1", fontSize: 13, fontWeight: 600, fontFamily: BODY }}>Vatsu saved your data</span>
     </div>
   );
 }
 
-/* --- Shared input style factory --------------------------------------- */
+/* ─── Shared input style factory ─────────────────────────────────────── */
 function iStyle(T) {
   return { background: T.inputBg, border: "1px solid " + T.borderAccent, borderRadius: 12, padding: "11px 14px", color: T.text, fontSize: 14, fontFamily: BODY, width: "100%", outline: "none" };
 }
@@ -299,7 +299,7 @@ function Btn({ v = "ghost", onClick, children, full, style: sx = {} }) {
   return <button style={{ ...base, ...(themes[v] || themes.ghost), ...sx }} onClick={onClick}>{children}</button>;
 }
 
-/* --- Swipe-to-delete expense row -------------------------------------- */
+/* ─── Swipe-to-delete expense row ────────────────────────────────────── */
 function SwipeRow({ exp, onDelete, theme, allCats }) {
   const T = THEMES[theme];
   const cat = allCats.find(c => c.id === exp.category) || CATS[0];
@@ -320,20 +320,20 @@ function SwipeRow({ exp, onDelete, theme, allCats }) {
           <div style={{ width: 36, height: 36, borderRadius: 10, background: cat.color + "22", border: "1px solid " + cat.color + "44", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>{cat.icon}</div>
           <div>
             <div style={{ fontSize: 14, color: T.text, fontWeight: 600, fontFamily: BODY }}>{exp.description}</div>
-            <div style={{ fontSize: 11, color: T.textMuted, marginTop: 2, fontFamily: BODY }}>{exp.date}{exp.recurringId ? " . 🔄" : ""}{exp.goalId ? " . 🎯" : ""}</div>
+            <div style={{ fontSize: 11, color: T.textMuted, marginTop: 2, fontFamily: BODY }}>{exp.date}{exp.recurringId ? " · 🔄" : ""}{exp.goalId ? " · 🎯" : ""}</div>
           </div>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <span style={{ padding: "2px 9px", borderRadius: 20, background: cat.color + "22", color: cat.color, fontSize: 11, fontWeight: 700, fontFamily: BODY }}>{cat.label}</span>
           <span style={{ fontWeight: 700, color: T.text, minWidth: 80, textAlign: "right", fontFamily: MONO, fontSize: 14 }}>{fmtINR(exp.amount)}</span>
-          <button onClick={() => onDelete(exp.id)} style={{ background: "#ff6b6b18", border: "none", color: "#ff6b6b", borderRadius: 8, width: 28, height: 28, cursor: "pointer", fontSize: 12 }}>x</button>
+          <button onClick={() => onDelete(exp.id)} style={{ background: "#ff6b6b18", border: "none", color: "#ff6b6b", borderRadius: 8, width: 28, height: 28, cursor: "pointer", fontSize: 12 }}>✕</button>
         </div>
       </div>
     </div>
   );
 }
 
-/* --- Challenge templates ----------------------------------------------- */
+/* ─── Challenge templates ─────────────────────────────────────────────── */
 const CHALL = [
   { id:"no_food", label:"No Eating Out Week", icon:"🥗", color:"#ff9f43", diff:"Medium", xp:150, days:7,
     desc:"Cut restaurants & food delivery for 7 days.",
@@ -343,61 +343,54 @@ const CHALL = [
     getP: cur => cur.expenses.filter(e => e.category === "food" && !e.recurringId).reduce((s,e) => s + e.amount, 0),
     isWin: p => p === 0,
     pct: p => p === 0 ? 100 : 0,
-    metric: p => p === 0 ? "No dining out yet  -  great start!" : fmtINR(p) + " spent on dining (target: ₹0)",
+    metric: p => p === 0 ? "No dining out — great!" : fmtINR(p) + " spent on dining",
   },
   { id:"rule50", label:"50% Rule Month", icon:"⚖️", color:"#54a0ff", diff:"Hard", xp:300, days:30,
     desc:"Keep total expenses under 50% of income for the month.",
     why:"The 50/30/20 rule is the gold standard. Needs < 50% = financial freedom.",
     tips:["Track every purchase","Identify top 3 non-essentials","Automate savings first"],
     badge:"⚖️ Balance Master",
-    getP: (cur, inc) => inc > 0 ? Math.round(cur.expenses.reduce((s,e) => s + e.amount, 0) / inc * 100) : 0,
-    isWin: (p, inc) => inc > 0 && p <= 50,
-    pct: (p, inc) => inc === 0 ? 0 : Math.min(100, Math.max(0, 100 - Math.max(0, p - 30))),
-    metric: (p, inc) => inc > 0 ? p + "% of income spent (target: <=50%)" : "Add income to track",
+    getP: (cur, inc) => inc > 0 ? cur.expenses.reduce((s,e) => s + e.amount, 0) / inc * 100 : 0,
+    isWin: p => p <= 50,
+    pct: p => Math.min(100, 100 - Math.max(0, p - 50) * 2),
+    metric: (p, inc) => inc > 0 ? Math.round(p) + "% of income spent" : "Add income first",
   },
   { id:"sub_cut", label:"Subscription Slayer", icon:"✂️", color:"#00d2d3", diff:"Easy", xp:100, days:30,
-    desc:"Review all subscriptions and cancel at least one unused service this month.",
-    why:"Average Indian pays for 4-6 subscriptions but actively uses only 2-3.",
-    tips:["List every subscription with cost","Check last login date for each","Cancel anything unused in 30 days"],
+    desc:"Review all subscriptions. Cancel at least one unused service.",
+    why:"Average Indian pays for 4-6 subscriptions but uses only 2-3 actively.",
+    tips:["List every subscription","Check last login date","Negotiate annual plans"],
     badge:"✂️ Subscription Slayer",
     getP: cur => cur.expenses.filter(e => e.category === "subscriptions").reduce((s,e) => s + e.amount, 0),
-    isWin: (p, inc, joined) => {
-      // Win = user has manually marked it done via a challenge-specific flag
-      // For now: win if subscriptions reduced vs last month or zero subs recorded
-      return p === 0;
-    },
-    pct: p => p === 0 ? 100 : 50,
-    metric: p => p === 0 ? "No subscriptions logged  -  audit complete!" : fmtINR(p) + "/month on subscriptions  -  review these",
+    isWin: () => true, pct: () => 100,
+    metric: p => fmtINR(p) + " on subscriptions this month",
   },
   { id:"save10k", label:"Save ₹10,000 Sprint", icon:"🏆", color:"#1dd1a1", diff:"Hard", xp:400, days:30,
     desc:"Contribute ₹10,000 to any savings goal this month.",
-    why:"₹10,000/month x 10 years at 12% = ₹23 Lakhs. Starting today matters most.",
+    why:"₹10,000/month × 10 years at 12% = ₹23 Lakhs. Starting today matters most.",
     tips:["Treat savings as first expense","Split across multiple goals","Cut one luxury to fund this"],
     badge:"🏆 Savings Champion",
     getP: cur => cur.expenses.filter(e => e.category === "savings").reduce((s,e) => s + e.amount, 0),
     isWin: p => p >= 10000,
-    pct: p => Math.min(100, Math.round(p / 10000 * 100)),
-    metric: p => fmtINR(p) + " saved (target: " + fmtINR(10000) + ")",
+    pct: p => Math.min(100, p / 10000 * 100),
+    metric: p => fmtINR(p) + " contributed to goals",
   },
-  { id:"green_go", label:"Green Commute Week", icon:"🚲", color:"#00b894", diff:"Medium", xp:200, days:7,
-    desc:"Keep transport spending under ₹500 for 7 days. Walk, cycle, or carpool.",
-    why:"Cutting transport costs for one week saves ₹500-₹3,000 depending on your city.",
-    tips:["Use metro/bus instead of cab","Combine errands into single trips","Try WFH days if possible"],
+  { id:"green_go", label:"Green Commute Week", icon:"🚲", color:"#1dd1a1", diff:"Medium", xp:200, days:7,
+    desc:"Halve your transport spending for 7 days. Walk, cycle, or carpool.",
+    why:"Cutting transport 50% for one week saves ₹500-₹3,000 depending on your city.",
+    tips:["Use metro/bus instead of cab","Combine errands into single trips","Try WFH days"],
     badge:"🌱 Eco Commuter",
     getP: cur => cur.expenses.filter(e => e.category === "transport").reduce((s,e) => s + e.amount, 0),
-    isWin: p => p <= 500,
-    pct: p => p === 0 ? 100 : Math.min(100, Math.max(0, Math.round((1 - p / 2000) * 100))),
-    metric: p => p <= 500 ? fmtINR(p) + " on transport  -  target met!" : fmtINR(p) + " on transport (target: <=₹500)",
+    isWin: () => true, pct: () => 100,
+    metric: p => fmtINR(p) + " on transport this week",
   },
   { id:"no_impulse", label:"Zero Impulse Month", icon:"🧘", color:"#cd84f1", diff:"Hard", xp:350, days:30,
-    desc:"Keep shopping expenses under ₹1,000 this month by applying the 24-hour rule.",
+    desc:"Wait 24 hours before any purchase above ₹500.",
     why:"Impulse purchases account for 40% of unplanned shopping. The 24-hour rule eliminates most.",
-    tips:["Remove saved cards from shopping apps","Unsubscribe from promotional emails","Use a wishlist  -  buy only after 30 days"],
+    tips:["Remove saved cards from apps","Unsubscribe from promo emails","Use a wishlist system"],
     badge:"🧘 Mindful Spender",
     getP: cur => cur.expenses.filter(e => e.category === "shopping").reduce((s,e) => s + e.amount, 0),
-    isWin: p => p <= 1000,
-    pct: p => p === 0 ? 100 : Math.min(100, Math.max(0, Math.round((1 - p / 5000) * 100))),
-    metric: p => p <= 1000 ? fmtINR(p) + " on shopping  -  impulse controlled!" : fmtINR(p) + " on shopping (target: <=₹1,000)",
+    isWin: () => true, pct: () => 100,
+    metric: p => fmtINR(p) + " on shopping this month",
   },
 ];
 
@@ -421,13 +414,13 @@ const DIFF_STYLE = {
   Hard:   { color:"#ff6b6b", bg:"#ff6b6b22", stars:"★★★" },
 };
 
-/* --- Goal colours ----------------------------------------------------- */
+/* ─── Goal colours ───────────────────────────────────────────────────── */
 const GCOLS = ["#1dd1a1","#54a0ff","#cd84f1","#ffd32a","#ff9f43","#00d2d3","#fd79a8","#a29bfe"];
-/* --- MAIN APP --------------------------------------------------------- */
+/* ─── MAIN APP ───────────────────────────────────────────────────────── */
 export default function Vatsu() {
   const isMobile = useIsMobile();
 
-  /* -- Persisted state - all loaded from localStorage on first render -- */
+  /* ── Persisted state — all loaded from localStorage on first render ── */
   const [monthlyData,   setMonthlyData]   = useState(() => load("vatsu_monthly",   {}));
   const [recurring,     setRecurring]     = useState(() => load("vatsu_recurring", []));
   const [goals,         setGoals]         = useState(() => load("vatsu_goals",     []));
@@ -436,11 +429,10 @@ export default function Vatsu() {
   const [customCats,    setCustomCats]    = useState(() => load("vatsu_custom_cats",[]));
   const [theme,         setTheme]         = useState(() => load("vatsu_theme",     "dark"));
 
-  /* -- UI state -- */
+  /* ── UI state ── */
   const [activeMonth,   setActiveMonth]   = useState(THIS_MONTH);
   const [activeYear]                      = useState(THIS_YEAR);
   const [tab,           setTab]           = useState("dashboard");
-  const [showMore,      setShowMore]      = useState(false);
   const [toast,         setToast]         = useState(false);
 
   const [showIncome,    setShowIncome]    = useState(false);
@@ -463,7 +455,7 @@ export default function Vatsu() {
   const IS = iStyle(T);
   const mk = `${activeYear}-${activeMonth}`;
 
-  /* -- Auto-save: every persisted slice writes back on change -- */
+  /* ── Auto-save: every persisted slice writes back on change ── */
   function flash() { setToast(true); setTimeout(() => setToast(false), 2200); }
   useEffect(() => { save("vatsu_monthly",    monthlyData);  flash(); }, [monthlyData]);
   useEffect(() => { save("vatsu_recurring",  recurring);    flash(); }, [recurring]);
@@ -473,13 +465,13 @@ export default function Vatsu() {
   useEffect(() => { save("vatsu_custom_cats",customCats);   flash(); }, [customCats]);
   useEffect(() => { save("vatsu_theme",      theme); },              [theme]);
 
-  /* -- All categories = built-in + user's custom ones -- */
+  /* ── All categories = built-in + user's custom ones ── */
   const allCats = useMemo(() => [
     ...CATS,
     ...customCats.map(c => ({ ...c, glow: c.color + "55" })),
   ], [customCats]);
 
-  /* -- Current month data with recurring expenses injected -- */
+  /* ── Current month data with recurring expenses injected ── */
   const curMonth = useMemo(() => {
     const base = monthlyData[mk] || { incomeSources:[], expenses:[], budgets:{} };
     const existIds = new Set(base.expenses.filter(e => e.recurringId).map(e => e.recurringId));
@@ -489,7 +481,7 @@ export default function Vatsu() {
     return { ...base, expenses: [...base.expenses, ...injected] };
   }, [monthlyData, mk, recurring]);
 
-  /* -- Active loans this month -- */
+  /* ── Active loans this month ── */
   const activeLoans = useMemo(() => loans.filter(l => {
     const s = l.startYear * 12 + l.startMonth;
     const c = activeYear  * 12 + activeMonth;
@@ -504,14 +496,14 @@ export default function Vatsu() {
   const spentPct  = totalInc > 0 ? Math.min(100, totalOut / totalInc * 100) : 0;
   const savePct   = totalInc > 0 ? Math.max(0, (totalInc - totalOut) / totalInc * 100) : 0;
 
-  /* -- Category breakdown for donut -- */
+  /* ── Category breakdown for donut ── */
   const catBreak = useMemo(() => {
     const map = {};
     curMonth.expenses.forEach(e => { map[e.category] = (map[e.category] || 0) + e.amount; });
     return allCats.filter(c => map[c.id] > 0).map(c => ({ ...c, value: map[c.id] }));
   }, [curMonth, allCats]);
 
-  /* -- Budget warnings -- */
+  /* ── Budget warnings ── */
   const warnings = useMemo(() => {
     const b = curMonth.budgets || {};
     return allCats.filter(c => {
@@ -524,7 +516,7 @@ export default function Vatsu() {
     });
   }, [curMonth, allCats]);
 
-  /* -- History months -- */
+  /* ── History months ── */
   const histMonths = useMemo(() => Object.keys(monthlyData).map(key => {
     const [y, m] = key.split("-").map(Number);
     const d = monthlyData[key];
@@ -538,40 +530,16 @@ export default function Vatsu() {
 
   const maxHist = useMemo(() => Math.max(...histMonths.map(h => Math.max(h.income, h.expenses)), 1), [histMonths]);
 
-  /* -- Overall Net Position (all-time, across every recorded month) -- */
-  const netPosition = useMemo(() => {
-    // Sum all-time income and expenses across every recorded month
-    const allTimeInc  = histMonths.reduce((s,h) => s + h.income,   0);
-    const allTimeExp  = histMonths.reduce((s,h) => s + h.expenses,  0);
-    // Outstanding loan principal still to be paid
-    const outstandingDebt = loans.reduce((s,l) => {
-      // Estimate remaining principal: simple approximation = principal - (months elapsed x EMI)
-      const monthsElapsed = Math.max(0, (THIS_YEAR*12+THIS_MONTH) - (l.startYear*12+l.startMonth));
-      const paidSoFar     = Math.min(l.principal, monthsElapsed * l.emi);
-      return s + Math.max(0, l.principal - paidSoFar);
-    }, 0);
-    // Money already saved inside goals
-    const savedInGoals = goals.reduce((s,g) => s + (g.saved||0), 0);
-    // Free cash = all income earned - all expenses paid
-    const freeCash = allTimeInc - allTimeExp;
-    // Net position = free cash - outstanding debt
-    const net = freeCash - outstandingDebt;
-    return { allTimeInc, allTimeExp, freeCash, outstandingDebt, savedInGoals, net, months: histMonths.length };
-  }, [histMonths, loans, goals]);
-
-  /* -- Health score -- */
+  /* ── Health score ── */
   const health = useMemo(() => calcHealth({ income: totalInc, outflow: totalOut, goals, savePct, budgets: curMonth.budgets || {}, expenses: curMonth.expenses, history: histMonths, allCats }), [totalInc, totalOut, goals, savePct, curMonth, histMonths, allCats]);
 
-  /* -- Challenges: active this month -- */
+  /* ── Challenges: active this month ── */
   const activeChalls = challenges.filter(c => c.month === activeMonth && c.year === activeYear);
 
   const allCompletedChalls = challenges.filter(c => {
     const tpl = CHALL.find(t => t.id === c.id);
     if (!tpl) return false;
     const mData = monthlyData[c.year + "-" + c.month] || { incomeSources:[], expenses:[] };
-    // Only count as completed if the month has actual data (income or expenses)
-    const hasMonthData = mData.incomeSources.length > 0 || mData.expenses.length > 0;
-    if (!hasMonthData) return false;
     const mInc  = mData.incomeSources.reduce((s,x) => s + x.amount, 0);
     return tpl.isWin(tpl.getP(mData, mInc), mInc);
   });
@@ -581,7 +549,7 @@ export default function Vatsu() {
 
   const hc = remaining < 0 ? "#ff6b6b" : spentPct > 90 ? "#ffa94d" : spentPct > 70 ? "#ffd32a" : "#1dd1a1";
 
-  /* =========================== MUTATIONS =========================== */
+  /* ═══════════════════════════ MUTATIONS ═══════════════════════════ */
 
   function addIncome() {
     const amt = parseFloat(incForm.amount);
@@ -601,13 +569,6 @@ export default function Vatsu() {
     });
   }
 
-
-  /* ================================================
-     SMS PARSER  -  parses Indian UPI/bank SMS text
-     Handles formats from:
-       - GPay, PhonePe, Paytm, BHIM
-       - HDFC, SBI, ICICI, Axis, Kotak SMS alerts
-  ================================================ */
   function addExpense() {
     const amt = parseFloat(expForm.amount);
     if (!expForm.description.trim() || !amt || amt <= 0) return;
@@ -691,26 +652,15 @@ export default function Vatsu() {
 
   function joinChallenge(tpl) {
     if (challenges.find(c => c.id === tpl.id && c.month === activeMonth && c.year === activeYear)) return;
-    setChallenges(p => [...p, {
-      id: tpl.id,
-      label: tpl.label,
-      icon: tpl.icon,
-      month: activeMonth,
-      year: activeYear,
-      joined: new Date().toLocaleDateString("en-IN"),
-    }]);
+    setChallenges(p => [...p, { ...tpl, month: activeMonth, year: activeYear, joined: new Date().toLocaleDateString("en-IN") }]);
     setChallDetail(null);
   }
 
-  function abandonChallenge(id) {
-    setChallenges(p => p.filter(c => !(c.id === id && c.month === activeMonth && c.year === activeYear)));
-  }
-
-  /* =========================== RENDER =============================== */
+  /* ═══════════════════════════ RENDER ═══════════════════════════════ */
   return (
     <div style={{ minHeight:"100vh", background:T.bg, color:T.text, fontFamily:BODY, transition:"background .3s,color .3s" }}>
       <style>{[
-        "@import url(https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Noto+Sans+Mono:wght@400;500&display=swap);",
+        "@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Noto+Sans+Mono:wght@400;500&display=swap');",
         "@keyframes vModalIn{from{opacity:0;transform:scale(.93) translateY(18px)}to{opacity:1;transform:scale(1) translateY(0)}}",
         "@keyframes vFadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}",
         "@keyframes vPulse{0%,100%{opacity:.5}50%{opacity:1}}",
@@ -720,7 +670,7 @@ export default function Vatsu() {
         "::-webkit-scrollbar{width:4px;height:4px}",
         "::-webkit-scrollbar-track{background:" + T.bg + "}",
         "::-webkit-scrollbar-thumb{background:" + T.scrollThumb + ";border-radius:3px}",
-        "html,body{font-family:DM Sans,Helvetica Neue,sans-serif;font-size:16px;-webkit-text-size-adjust:100%}",
+        "html,body{font-family:'DM Sans','Helvetica Neue',sans-serif;font-size:16px;-webkit-text-size-adjust:100%}",
         "body{overscroll-behavior:none}",
         "input::placeholder,textarea::placeholder{color:" + T.textMuted + "}",
         "select option{background:" + T.surface + ";color:" + T.text + "}",
@@ -734,7 +684,7 @@ export default function Vatsu() {
         ".vmodal-box{animation:vModalIn .28s cubic-bezier(.34,1.56,.64,1)}",
         ".vtab:hover{color:#7ecfb8!important}",
         "button:active{opacity:.8;transform:scale(.97)}",
-        ".vbnav{display:none;position:fixed;bottom:0;left:0;right:0;background:" + T.surface + ";border-top:1px solid " + T.border + ";padding:8px 4px;padding-bottom:max(8px,env(safe-area-inset-bottom));z-index:200;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}",
+        ".vbnav{display:none;position:fixed;bottom:0;left:0;right:0;background:" + T.surface + ";border-top:1px solid " + T.border + ";padding:8px 4px;padding-bottom:max(8px,env(safe-area-inset-bottom));z-index:200;backdrop-filter:blur(20px)}",
         ".vbnav-inner{display:flex;justify-content:space-around;align-items:center;max-width:600px;margin:0 auto}",
         ".vbnav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 10px;border:none;background:none;cursor:pointer;border-radius:14px;transition:all .2s;min-width:52px;-webkit-tap-highlight-color:transparent}",
         ".vbnav-btn.active{background:#1dd1a120}",
@@ -761,7 +711,7 @@ export default function Vatsu() {
 
       <Toast show={toast} />
 
-      {/* -- HEADER -- */}
+      {/* ── HEADER ── */}
       <header className="vheader" style={{ background:T.headerBg, borderBottom:"1px solid " + T.border, padding:"0 28px", display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:10, position:"sticky", top:0, zIndex:100, backdropFilter:"blur(14px)", boxShadow:"0 4px 24px #00000055" }}>
         <div style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 0" }}>
           <div style={{ animation:"vFloat 4s ease-in-out infinite" }}>
@@ -796,16 +746,16 @@ export default function Vatsu() {
           <button onClick={() => setTheme(t => t === "dark" ? "light" : "dark")} style={{ width:36, height:36, borderRadius:10, background:T.border, border:"none", cursor:"pointer", fontSize:17, display:"flex", alignItems:"center", justifyContent:"center" }}>
             {theme === "dark" ? "☀️" : "🌙"}
           </button>
-          <button onClick={() => setActiveMonth(m => m === 0 ? 11 : m - 1)} style={{ background:T.border, border:"none", color:T.textSub, width:32, height:32, borderRadius:10, cursor:"pointer", fontSize:18, display:"flex", alignItems:"center", justifyContent:"center" }}><</button>
+          <button onClick={() => setActiveMonth(m => m === 0 ? 11 : m - 1)} style={{ background:T.border, border:"none", color:T.textSub, width:32, height:32, borderRadius:10, cursor:"pointer", fontSize:18, display:"flex", alignItems:"center", justifyContent:"center" }}>‹</button>
           <div className="vmonth-label" style={{ textAlign:"center", minWidth:160 }}>
             <div style={{ fontSize:15, fontWeight:700, color:T.textBright, fontFamily:TF }}>{MONTHS[activeMonth]} {activeYear}</div>
             {totalInc > 0 && <div style={{ fontSize:10, color:"#1dd1a1", fontFamily:MONO }}>{fmtINR(totalInc)}</div>}
           </div>
-          <button onClick={() => setActiveMonth(m => m === 11 ? 0 : m + 1)} style={{ background:T.border, border:"none", color:T.textSub, width:32, height:32, borderRadius:10, cursor:"pointer", fontSize:18, display:"flex", alignItems:"center", justifyContent:"center" }}>></button>
+          <button onClick={() => setActiveMonth(m => m === 11 ? 0 : m + 1)} style={{ background:T.border, border:"none", color:T.textSub, width:32, height:32, borderRadius:10, cursor:"pointer", fontSize:18, display:"flex", alignItems:"center", justifyContent:"center" }}>›</button>
         </div>
       </header>
 
-      {/* -- DESKTOP TABS -- */}
+      {/* ── DESKTOP TABS ── */}
       <div className="vdesktop-tabs" style={{ background:T.tabBg, borderBottom:"1px solid " + T.border, padding:"0 28px", gap:2, overflowX:"auto" }}>
         {[["dashboard","📊 Dashboard"],["insights","🔍 Insights"],["history","📈 History"],["goals","🎯 Goals"],["loans","🏦 Loans"],["challenges","🏆 Challenges"],["advisor","🤖 AI Advisor"]].map(([id,lbl]) => (
           <button key={id} className="vtab" onClick={() => setTab(id)} style={{ padding:"12px 18px", fontSize:12, fontWeight:600, cursor:"pointer", border:"none", background:"none", color: tab === id ? "#2ee8a8" : T.textSub, borderBottom: tab === id ? "2px solid #2ee8a8" : "2px solid transparent", transition:"all .2s", fontFamily:BODY, whiteSpace:"nowrap", position:"relative" }}>
@@ -815,85 +765,38 @@ export default function Vatsu() {
         ))}
       </div>
 
-      {/* -- MOBILE BOTTOM NAV -- */}
+      {/* ── MOBILE BOTTOM NAV ── */}
       <nav className="vbnav">
-
-        {/* -- Mini tab bar - slides in above nav when More is open -- */}
-        {showMore && (
-          <div style={{
-            position:"absolute", bottom:"100%", left:0, right:0,
-            background:T.surface,
-            borderTop:"1px solid "+T.border,
-            borderBottom:"1px solid "+T.border,
-            display:"flex", gap:0,
-            animation:"vFadeUp .18s ease",
-            zIndex:201,
-          }}>
-            {[["invest","📈","Invest"],["history","📊","History"]].map(([id,icon,lbl]) => (
-              <button key={id}
-                onClick={() => { setTab(id); setShowMore(false); }}
-                style={{
-                  flex:1, display:"flex", flexDirection:"column", alignItems:"center",
-                  gap:4, padding:"12px 8px",
-                  border:"none", background: tab===id ? "#1dd1a115" : "transparent",
-                  cursor:"pointer",
-                  borderBottom: tab===id ? "2px solid #2ee8a8" : "2px solid transparent",
-                  transition:"all .15s",
-                }}>
-                <span style={{ fontSize:20 }}>{icon}</span>
-                <span style={{ fontSize:11, fontWeight:700, fontFamily:BODY, color: tab===id ? "#2ee8a8" : T.textSub }}>
-                  {lbl}
-                </span>
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* -- Main nav row -- */}
         <div className="vbnav-inner">
           {[["dashboard","📊","Home"],["insights","🔍","Insights"],["goals","🎯","Goals"],["challenges","🏆","Challenges"],["advisor","🤖","Advisor"]].map(([id,icon,lbl]) => (
-            <button key={id} className={"vbnav-btn" + (tab===id?" active":"")}
-              onClick={() => { setTab(id); setShowMore(false); }}>
+            <button key={id} className={"vbnav-btn" + (tab === id ? " active" : "")} onClick={() => setTab(id)}>
               <span style={{ fontSize:22 }}>{icon}</span>
-              <span style={{ fontSize:9, fontWeight:600, fontFamily:BODY, color:tab===id?"#2ee8a8":T.textSub }}>{lbl}</span>
+              <span style={{ fontSize:9, fontWeight:600, fontFamily:BODY, color: tab === id ? "#2ee8a8" : T.textSub }}>{lbl}</span>
             </button>
           ))}
-
-          {/* More button */}
-          <button className="vbnav-btn"
-            onClick={() => setShowMore(s => !s)}
-            style={{ position:"relative" }}>
-            <span style={{ fontSize:22, transition:"transform .2s", display:"block", transform: showMore?"rotate(90deg)":"rotate(0deg)" }}>...</span>
-            <span style={{ fontSize:9, fontWeight:600, fontFamily:BODY, color: showMore||["history","invest"].includes(tab) ? "#2ee8a8" : T.textSub }}>More</span>
-            {/* Dot indicator when a sub-tab is active */}
-            {["history","invest"].includes(tab) && !showMore && (
-              <span style={{
-                position:"absolute", top:4, right:10,
-                width:6, height:6, borderRadius:"50%",
-                background:"#2ee8a8",
-                boxShadow:"0 0 6px #2ee8a8aa",
-              }}/>
-            )}
+          <button className={"vbnav-btn" + (["history","loans"].includes(tab) ? " active" : "")} onClick={() => setTab(t => ["history","loans"].includes(t) ? "history" : t === "history" ? "loans" : "history")}>
+            <span style={{ fontSize:22 }}>⋯</span>
+            <span style={{ fontSize:9, fontWeight:600, fontFamily:BODY, color:["history","loans"].includes(tab) ? "#2ee8a8" : T.textSub }}>More</span>
           </button>
         </div>
       </nav>
 
-      {/* -- WARNINGS BANNER -- */}
+      {/* ── WARNINGS BANNER ── */}
       {warnings.length > 0 && tab === "dashboard" && (
         <div style={{ background: theme === "dark" ? "linear-gradient(90deg,#1a0800,#1a0e00)" : "#fff8f0", borderBottom:"1px solid #ffa94d33", padding:"10px 28px", display:"flex", flexWrap:"wrap", gap:10 }}>
           {warnings.map(w => (
             <div key={w.id} style={{ display:"flex", alignItems:"center", gap:8, background:"#ffa94d15", border:"1px solid #ffa94d44", borderRadius:10, padding:"7px 14px" }}>
               <span style={{ animation:"vPulse 1.5s infinite", display:"inline-block" }}>⚠️</span>
-              <span style={{ fontSize:12, color:"#ffba5e", fontFamily:BODY, fontWeight:500 }}><b>{w.label}</b> at {w.pct}%  -  {fmtINR(w.spent)} of {fmtINR(w.bgt)}</span>
+              <span style={{ fontSize:12, color:"#ffba5e", fontFamily:BODY, fontWeight:500 }}><b>{w.label}</b> at {w.pct}% — {fmtINR(w.spent)} of {fmtINR(w.bgt)}</span>
             </div>
           ))}
         </div>
       )}
 
-      {/* =================== MAIN CONTENT =================== */}
-      <main className="vmain" onClick={() => showMore && setShowMore(false)}>
+      {/* ═══════════════════ MAIN CONTENT ═══════════════════ */}
+      <main className="vmain">
 
-        {/* -- DASHBOARD -- */}
+        {/* ── DASHBOARD ── */}
         {tab === "dashboard" && (
           <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
             {/* Stat cards */}
@@ -905,102 +808,15 @@ export default function Vatsu() {
               <StatCard title="Remaining" value={Math.abs(remaining)} sub={remaining < 0 ? "⚠️ Over budget!" : spentPct > 90 ? "🔴 Critical" : spentPct > 70 ? "🟡 Caution" : "🟢 On track"} accent={hc} icon={remaining < 0 ? "🚨" : "✅"} theme={theme} />
             </div>
 
-
-            {/* -- NET FINANCIAL POSITION (all-time) -- */}
-            {netPosition.months > 0 && (() => {
-              const { allTimeInc, allTimeExp, freeCash, outstandingDebt, savedInGoals, net } = netPosition;
-              const isPositive = net >= 0;
-              const netColor   = net > 0 ? "#1dd1a1" : net === 0 ? "#ffd32a" : "#ff6b6b";
-              const statusLabel= net > 0 ? "Net Positive" : net === 0 ? "Break Even" : "Net Negative";
-              const statusIcon = net > 0 ? "✅" : net === 0 ? "⚖️" : "⚠️";
-              const overallSavePct = allTimeInc > 0 ? Math.round((freeCash / allTimeInc) * 100) : 0;
-              return (
-                <div style={{ background:"linear-gradient(135deg,#060f1c,#0a1628)", border:"1.5px solid "+netColor+"44", borderRadius:20, padding:"22px 24px", position:"relative", overflow:"hidden", boxShadow:"0 8px 32px "+netColor+"18" }}>
-                  <div style={{ position:"absolute", top:-50, right:-50, width:220, height:220, borderRadius:"50%", background:netColor+"08", filter:"blur(60px)", pointerEvents:"none" }} />
-                  {/* Header */}
-                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:16, flexWrap:"wrap", gap:10, position:"relative" }}>
-                    <div>
-                      <div style={{ fontSize:11, fontWeight:700, color:T.textSub, letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:3, fontFamily:BODY }}>💼 Overall Net Position</div>
-                      <div style={{ fontSize:11, color:T.textMuted, fontFamily:BODY }}>All-time across {netPosition.months} recorded month{netPosition.months !== 1 ? "s" : ""}</div>
-                    </div>
-                    <span style={{ padding:"5px 14px", borderRadius:20, background:netColor+"22", border:"1px solid "+netColor+"44", fontSize:11, fontWeight:700, color:netColor, fontFamily:BODY, whiteSpace:"nowrap" }}>
-                      {statusIcon} {statusLabel}
-                    </span>
-                  </div>
-                  {/* Big number */}
-                  <div style={{ marginBottom:18, position:"relative" }}>
-                    <div style={{ fontSize:11, color:T.textSub, fontFamily:BODY, marginBottom:4 }}>
-                      {isPositive ? "Net Surplus  -  Free Cash after all outstanding debt" : "Net Deficit  -  Outstanding debt exceeds your free cash"}
-                    </div>
-                    <div style={{ display:"flex", alignItems:"baseline", gap:8, flexWrap:"wrap" }}>
-                      <span style={{ fontSize:34, fontWeight:800, color:netColor, fontFamily:MONO, lineHeight:1, letterSpacing:"-1px" }}>
-                        {net < 0 ? "-" : ""}{fmtINR(Math.abs(net))}
-                      </span>
-                      {allTimeInc > 0 && (
-                        <span style={{ fontSize:13, color:netColor+"bb", fontFamily:BODY, fontWeight:600 }}>
-                          ({overallSavePct >= 0 ? "+" : ""}{overallSavePct}% of lifetime income)
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  {/* Breakdown tiles */}
-                  <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))", gap:10, marginBottom:16 }}>
-                    {[
-                      { label:"Total Earned",    value:allTimeInc,     color:"#1dd1a1", icon:"💵", tip:"All income across every recorded month" },
-                      { label:"Total Spent",     value:allTimeExp,     color:"#ff6b6b", icon:"💸", tip:"All expenses across every recorded month" },
-                      { label:"Free Cash",       value:freeCash,       color:freeCash>=0?"#54a0ff":"#ff6b6b", icon:"💼", tip:"Total earned minus total spent" },
-                      { label:"Debt Remaining",  value:outstandingDebt,color:"#ffa94d", icon:"🏦", tip:"Estimated remaining loan principal" },
-                      { label:"Saved in Goals",  value:savedInGoals,   color:"#cd84f1", icon:"🎯", tip:"Total contributed to all savings goals" },
-                    ].map(item => (
-                      <div key={item.label} title={item.tip} style={{ padding:"11px 13px", background:T.surface2+"cc", borderRadius:12, border:"1px solid "+item.color+"22" }}>
-                        <div style={{ fontSize:15, marginBottom:4 }}>{item.icon}</div>
-                        <div style={{ fontSize:14, fontWeight:800, color:item.color, fontFamily:MONO, lineHeight:1 }}>{fmtINR(item.value)}</div>
-                        <div style={{ fontSize:10, color:T.textSub, marginTop:4, fontFamily:BODY, lineHeight:1.4 }}>{item.label}</div>
-                      </div>
-                    ))}
-                  </div>
-                  {/* Visual bar */}
-                  {allTimeInc > 0 && (
-                    <div style={{ marginBottom:14 }}>
-                      <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
-                        <span style={{ fontSize:11, color:T.textSub, fontFamily:BODY }}>Lifetime Earnings Allocation</span>
-                        <span style={{ fontSize:11, fontWeight:700, color:netColor, fontFamily:MONO }}>{Math.round(Math.min(100,(allTimeExp/allTimeInc)*100))}% spent</span>
-                      </div>
-                      <div style={{ height:10, background:T.border, borderRadius:99, overflow:"hidden", position:"relative" }}>
-                        <div style={{ position:"absolute", left:0, height:"100%", width:Math.min(100,(allTimeExp/allTimeInc)*100)+"%", background:"linear-gradient(90deg,#c0392b,#ff6b6b)", borderRadius:99, transition:"width .9s ease" }} />
-                        {outstandingDebt > 0 && <div style={{ position:"absolute", left:Math.min(100,(allTimeExp/allTimeInc)*100)+"%", height:"100%", width:Math.min(100,(outstandingDebt/allTimeInc)*100)+"%", background:"linear-gradient(90deg,#e67e22,#ffa94d)", transition:"width .9s ease" }} />}
-                      </div>
-                      <div style={{ display:"flex", gap:12, marginTop:6, flexWrap:"wrap" }}>
-                        <span style={{ fontSize:10, color:"#ff6b6b", fontFamily:BODY }}># Spent {fmtINR(allTimeExp)}</span>
-                        {outstandingDebt > 0 && <span style={{ fontSize:10, color:"#ffa94d", fontFamily:BODY }}># Debt {fmtINR(outstandingDebt)}</span>}
-                        <span style={{ fontSize:10, color:"#1dd1a1", fontFamily:BODY }}># Free {fmtINR(Math.max(0,freeCash))}</span>
-                      </div>
-                    </div>
-                  )}
-                  {/* Insight tip */}
-                  <div style={{ padding:"10px 14px", background:netColor+"0e", border:"1px solid "+netColor+"22", borderRadius:10 }}>
-                    <span style={{ fontSize:12, color:netColor, fontFamily:BODY, lineHeight:1.6 }}>
-                      {net > 0
-                        ? "Your free cash of " + fmtINR(freeCash) + " minus outstanding debt (" + fmtINR(outstandingDebt) + ") leaves you with a net surplus of " + fmtINR(net) + ". Consider investing this surplus!"
-                        : net < 0
-                        ? "Your debt of " + fmtINR(outstandingDebt) + " exceeds your free cash by " + fmtINR(Math.abs(net)) + ". Focus on prepaying your highest-interest loan first."
-                        : "You are exactly at break-even. Grow your surplus by reducing monthly expenses or boosting income."
-                      }
-                    </span>
-                  </div>
-                </div>
-              );
-            })()}
-
             {/* Progress bar */}
             {totalInc > 0 && (
               <div className="vcard" style={{ background:T.cardGrad }}>
                 <div style={{ display:"flex", justifyContent:"space-between", marginBottom:12, flexWrap:"wrap", gap:8 }}>
                   <span style={{ fontSize:11, fontWeight:700, color:T.textSub, letterSpacing:"0.1em", textTransform:"uppercase", fontFamily:BODY }}>Monthly Budget Health</span>
                   <div style={{ display:"flex", gap:14, flexWrap:"wrap" }}>
-                    <span style={{ fontSize:11, color:"#ff6b6b", fontFamily:BODY }}>| Expenses {fmtINR(totalExp)}</span>
-                    {totalEMI > 0 && <span style={{ fontSize:11, color:"#ffa94d", fontFamily:BODY }}>| EMI {fmtINR(totalEMI)}</span>}
-                    <span style={{ fontSize:11, color:"#1dd1a1", fontFamily:BODY }}>| Left {fmtINR(Math.max(0,remaining))}</span>
+                    <span style={{ fontSize:11, color:"#ff6b6b", fontFamily:BODY }}>▮ Expenses {fmtINR(totalExp)}</span>
+                    {totalEMI > 0 && <span style={{ fontSize:11, color:"#ffa94d", fontFamily:BODY }}>▮ EMI {fmtINR(totalEMI)}</span>}
+                    <span style={{ fontSize:11, color:"#1dd1a1", fontFamily:BODY }}>▮ Left {fmtINR(Math.max(0,remaining))}</span>
                   </div>
                 </div>
                 <div style={{ height:14, background:T.border2, borderRadius:99, overflow:"hidden", position:"relative" }}>
@@ -1015,37 +831,10 @@ export default function Vatsu() {
               </div>
             )}
 
-            {/* -- INVEST TEASER CARD -- */}
-            {totalInc > 0 && remaining > 0 && (
-              <div onClick={() => setTab("invest")} style={{ cursor:"pointer", background:"linear-gradient(135deg,#060f1c,#0a1a2e)", border:"1.5px solid #1dd1a155", borderRadius:18, padding:"18px 22px", position:"relative", overflow:"hidden", transition:"all .25s" }}
-                onMouseEnter={e=>{e.currentTarget.style.borderColor="#1dd1a1aa";e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 8px 28px #1dd1a122";}}
-                onMouseLeave={e=>{e.currentTarget.style.borderColor="#1dd1a155";e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="none";}}>
-                <div style={{ position:"absolute", top:-30, right:-30, width:150, height:150, borderRadius:"50%", background:"#1dd1a108", filter:"blur(40px)", pointerEvents:"none" }} />
-                <div style={{ position:"relative", display:"flex", alignItems:"center", gap:16, flexWrap:"wrap" }}>
-                  <div style={{ width:50, height:50, borderRadius:14, background:"linear-gradient(135deg,#1dd1a122,#1dd1a108)", border:"1.5px solid #1dd1a144", display:"flex", alignItems:"center", justifyContent:"center", fontSize:24, flexShrink:0, boxShadow:"0 0 16px #1dd1a133" }}>📈</div>
-                  <div style={{ flex:1, minWidth:180 }}>
-                    <div style={{ fontSize:14, fontWeight:700, color:"#f0f8ff", fontFamily:TF, marginBottom:3 }}>
-                      You have {fmtINR(remaining)} to invest this month!
-                    </div>
-                    <div style={{ fontSize:12, color:T.textSub, fontFamily:BODY, lineHeight:1.6 }}>
-                      Investing {fmtINR(Math.round(remaining*0.5))}/month (50% of surplus) in a Nifty 50 SIP could grow to{" "}
-                      <span style={{ color:"#1dd1a1", fontWeight:700 }}>{fmtINR(sipProjection(Math.round(remaining*0.5),10,12))}</span> in 10 years at 12% CAGR.
-                    </div>
-                  </div>
-                  <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6, flexShrink:0 }}>
-                    <span style={{ padding:"5px 14px", borderRadius:20, background:"#1dd1a122", border:"1px solid #1dd1a144", color:"#1dd1a1", fontSize:12, fontWeight:700, fontFamily:BODY }}>
-                      View Invest Tab ->
-                    </span>
-                    <span style={{ fontSize:10, color:T.textMuted, fontFamily:BODY }}>SIP Calculator . Readiness . Top Funds</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Income sources */}
             {curMonth.incomeSources.length > 0 && (
               <div className="vcard" style={{ background:T.cardGrad, borderColor:"#1a3a28" }}>
-                <div style={{ fontSize:11, fontWeight:700, color:T.textSub, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:14, fontFamily:BODY }}>Income Sources  -  {MONTHS[activeMonth]}</div>
+                <div style={{ fontSize:11, fontWeight:700, color:T.textSub, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:14, fontFamily:BODY }}>Income Sources — {MONTHS[activeMonth]}</div>
                 {curMonth.incomeSources.map(s => (
                   <div key={s.id} className="vrow" style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"9px 14px", background:T.surface2, borderRadius:12, border:"1px solid " + T.border2, marginBottom:6, transition:"all .2s" }}>
                     <div style={{ display:"flex", alignItems:"center", gap:10 }}>
@@ -1054,7 +843,7 @@ export default function Vatsu() {
                     </div>
                     <div style={{ display:"flex", gap:10, alignItems:"center" }}>
                       <span style={{ color:"#1dd1a1", fontWeight:700, fontSize:15, fontFamily:MONO }}>{fmtINR(s.amount)}</span>
-                      <button onClick={() => removeIncome(s.id)} style={{ background:"#ff6b6b18", border:"none", color:"#ff6b6b", borderRadius:8, width:28, height:28, cursor:"pointer", fontSize:12 }}>x</button>
+                      <button onClick={() => removeIncome(s.id)} style={{ background:"#ff6b6b18", border:"none", color:"#ff6b6b", borderRadius:8, width:28, height:28, cursor:"pointer", fontSize:12 }}>✕</button>
                     </div>
                   </div>
                 ))}
@@ -1064,21 +853,19 @@ export default function Vatsu() {
             {/* Expense form + Donut */}
             <div className="vgrid" style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))", gap:18 }}>
               <div className="vcard" style={{ background:T.cardGrad }}>
-
                 <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
                   <div style={{ fontSize:11, fontWeight:700, color:T.textSub, letterSpacing:"0.1em", textTransform:"uppercase", fontFamily:BODY }}>Add Expense</div>
                   <div style={{ display:"flex", gap:8 }}>
-                    {customCats.length > 0 && <button onClick={() => setShowManageCats(true)} style={{ fontSize:11, padding:"5px 10px", borderRadius:9, background:T.border, border:"none", color:T.textSub, cursor:"pointer", fontFamily:BODY }}>My Cats</button>}
-                    <Btn onClick={() => { setBudgForm(curMonth.budgets || {}); setShowBudget(true); }} sx={{ fontSize:11, padding:"6px 12px" }}>Settings Budgets</Btn>
+                    {customCats.length > 0 && <button onClick={() => setShowManageCats(true)} style={{ fontSize:11, padding:"5px 10px", borderRadius:9, background:T.border, border:"none", color:T.textSub, cursor:"pointer", fontFamily:BODY }}>🏷️ My Cats</button>}
+                    <Btn onClick={() => { setBudgForm(curMonth.budgets || {}); setShowBudget(true); }} sx={{ fontSize:11, padding:"6px 12px" }}>⚙ Budgets</Btn>
                   </div>
                 </div>
-                {/* -- Standard expense form -- */}
                 <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
                   <Field label="Description" T={T}>
                     <input style={IS} placeholder="e.g. Swiggy, Petrol, Movie…" value={expForm.description} onChange={e => setExpForm(p => ({ ...p, description: e.target.value }))} />
                   </Field>
                   <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
-                    <Field label={"Amount (₹)"} T={T}>
+                    <Field label={"Amount (\u20B9)"} T={T}>
                       <input style={IS} type="number" placeholder="0" value={expForm.amount} onChange={e => setExpForm(p => ({ ...p, amount: e.target.value }))} />
                     </Field>
                     <Field label="Category" T={T}>
@@ -1099,12 +886,13 @@ export default function Vatsu() {
                   </div>
                   <label style={{ display:"flex", alignItems:"center", gap:8, cursor:"pointer", color:T.textSub, fontSize:13, userSelect:"none", fontFamily:BODY }}>
                     <input type="checkbox" checked={expForm.isRecurring} onChange={e => setExpForm(p => ({ ...p, isRecurring: e.target.checked }))} />
-                    Recurring  -  auto-add every month
+                    Recurring — auto-add every month
                   </label>
                   <Btn v="primary" full onClick={addExpense}>+ Add Expense</Btn>
                 </div>
               </div>
 
+              <div className="vcard" style={{ background:T.cardGrad }}>
                 <div style={{ fontSize:11, fontWeight:700, color:T.textSub, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:14, fontFamily:BODY }}>Spending Breakdown <span style={{ color:T.textMuted, fontSize:10, fontWeight:400 }}>(hover)</span></div>
                 <div style={{ display:"flex", gap:14, alignItems:"center", flexWrap:"wrap" }}>
                   <div style={{ flex:"0 0 170px" }}>
@@ -1140,7 +928,7 @@ export default function Vatsu() {
             {/* Expense list */}
             <div className="vcard" style={{ background:T.cardGrad }}>
               <div style={{ fontSize:11, fontWeight:700, color:T.textSub, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:14, fontFamily:BODY }}>
-                All Expenses  -  {MONTHS[activeMonth]}
+                All Expenses — {MONTHS[activeMonth]}
                 <span style={{ color:T.textMuted, fontSize:10, fontWeight:400, marginLeft:8 }}>Swipe left on mobile to delete</span>
               </div>
               {curMonth.expenses.length === 0
@@ -1151,12 +939,12 @@ export default function Vatsu() {
           </div>
         )}
 
-        {/* -- INSIGHTS -- */}
+        {/* ── INSIGHTS ── */}
         {tab === "insights" && (
           <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
             {/* Snapshot strip */}
             <div className="vcard" style={{ background:"linear-gradient(135deg,#0a1628,#0d1f38)" }}>
-              <div style={{ fontSize:11, fontWeight:700, color:T.textSub, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:16, fontFamily:BODY }}>📊 Snapshot  -  {MONTHS[activeMonth]}</div>
+              <div style={{ fontSize:11, fontWeight:700, color:T.textSub, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:16, fontFamily:BODY }}>📊 Snapshot — {MONTHS[activeMonth]}</div>
               <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(100px,1fr))", gap:12 }}>
                 {[
                   { lbl:"Income",       val:totalInc,         color:"#1dd1a1", icon:"💵" },
@@ -1219,11 +1007,11 @@ export default function Vatsu() {
               const savRate = totalInc > 0 ? savAmt / totalInc * 100 : 0;
               const ins = [];
               const catTotals = allCats.map(c => ({ ...c, amt: curMonth.expenses.filter(e => e.category === c.id).reduce((s,e) => s + e.amount, 0) })).sort((a,b) => b.amt - a.amt);
-              if (catTotals[0]?.amt > 0) ins.push({ icon:catTotals[0].icon, color:catTotals[0].color, title:"Top Spend Category", headline:catTotals[0].label + " is your biggest expense", detail:fmtINR(catTotals[0].amt) + " spent  -  " + (totalInc > 0 ? Math.round(catTotals[0].amt/totalInc*100) + "% of income" : ""), sev:"low" });
-              if (prevExp > 0) { const d = totalExp - prevExp; const p = Math.round(Math.abs(d)/prevExp*100); if (Math.abs(p) > 5) ins.push({ icon: d>0?"📈":"📉", color:d>0?"#ff6b6b":"#1dd1a1", title:"vs Last Month", headline: d>0 ? "Spending up " + p + "% vs last month" : "Spending down " + p + "%  -  great work!", detail:"This month: " + fmtINR(totalExp) + " . Last month: " + fmtINR(prevExp), sev: d>0 && p>20 ? "high" : d>0 ? "medium" : "low" }); }
-              if (totalInc > 0) ins.push({ icon:"💰", color: savRate>=20?"#1dd1a1":savRate>=10?"#ffd32a":"#ff6b6b", title:"Savings Rate", headline: savRate>=20 ? "Excellent! Saving " + Math.round(savRate) + "% of income" : "Saving " + Math.round(savRate) + "%  -  target is 20%", detail: savRate < 20 && totalInc > 0 ? "Need " + fmtINR(Math.round(totalInc*0.2-savAmt)) + " more to hit 20% target" : "Well above the 20% benchmark!", sev: savRate<10?"high":savRate<20?"medium":"low" });
+              if (catTotals[0]?.amt > 0) ins.push({ icon:catTotals[0].icon, color:catTotals[0].color, title:"Top Spend Category", headline:catTotals[0].label + " is your biggest expense", detail:fmtINR(catTotals[0].amt) + " spent — " + (totalInc > 0 ? Math.round(catTotals[0].amt/totalInc*100) + "% of income" : ""), sev:"low" });
+              if (prevExp > 0) { const d = totalExp - prevExp; const p = Math.round(Math.abs(d)/prevExp*100); if (Math.abs(p) > 5) ins.push({ icon: d>0?"📈":"📉", color:d>0?"#ff6b6b":"#1dd1a1", title:"vs Last Month", headline: d>0 ? "Spending up " + p + "% vs last month" : "Spending down " + p + "% — great work!", detail:"This month: " + fmtINR(totalExp) + " · Last month: " + fmtINR(prevExp), sev: d>0 && p>20 ? "high" : d>0 ? "medium" : "low" }); }
+              if (totalInc > 0) ins.push({ icon:"💰", color: savRate>=20?"#1dd1a1":savRate>=10?"#ffd32a":"#ff6b6b", title:"Savings Rate", headline: savRate>=20 ? "Excellent! Saving " + Math.round(savRate) + "% of income" : "Saving " + Math.round(savRate) + "% — target is 20%", detail: savRate < 20 && totalInc > 0 ? "Need " + fmtINR(Math.round(totalInc*0.2-savAmt)) + " more to hit 20% target" : "Well above the 20% benchmark!", sev: savRate<10?"high":savRate<20?"medium":"low" });
               const largeExp = curMonth.expenses.filter(e => totalInc>0 && e.amount>totalInc*0.15 && e.category!=="savings");
-              if (largeExp.length > 0) ins.push({ icon:"⚡", color:"#cd84f1", title:"Large Expense", headline:"\"" + largeExp[0].description + "\" is " + Math.round(largeExp[0].amount/totalInc*100) + "% of income", detail:fmtINR(largeExp[0].amount) + "  -  consider if this was planned", sev:"medium" });
+              if (largeExp.length > 0) ins.push({ icon:"⚡", color:"#cd84f1", title:"Large Expense", headline:"\"" + largeExp[0].description + "\" is " + Math.round(largeExp[0].amount/totalInc*100) + "% of income", detail:fmtINR(largeExp[0].amount) + " — consider if this was planned", sev:"medium" });
               const SEV = { high:"#ff6b6b", medium:"#ffa94d", low:"#1dd1a1" };
               const SEVL = { high:"🔴 Action Needed", medium:"🟡 Watch This", low:"🟢 Good" };
               return (
@@ -1252,7 +1040,7 @@ export default function Vatsu() {
           </div>
         )}
 
-        {/* -- HISTORY -- */}
+        {/* ── HISTORY ── */}
         {tab === "history" && (
           <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
             <div className="vcard" style={{ background:T.cardGrad }}>
@@ -1264,8 +1052,8 @@ export default function Vatsu() {
                     {histMonths.map(h => <TrendBar key={h.key} label={SHORT[h.month]} income={h.income} expenses={h.expenses} maxVal={maxHist} isActive={h.month===activeMonth&&h.year===activeYear} onClick={() => { setActiveMonth(h.month); setTab("dashboard"); }} />)}
                   </div>
                   <div style={{ display:"flex", gap:14, marginTop:10, justifyContent:"flex-end" }}>
-                    <span style={{ fontSize:11, color:"#1dd1a1", fontFamily:BODY }}>| Income</span>
-                    <span style={{ fontSize:11, color:"#ff6b6b", fontFamily:BODY }}>| Outflow</span>
+                    <span style={{ fontSize:11, color:"#1dd1a1", fontFamily:BODY }}>▮ Income</span>
+                    <span style={{ fontSize:11, color:"#ff6b6b", fontFamily:BODY }}>▮ Outflow</span>
                   </div>
                   <div style={{ marginTop:18, display:"flex", flexDirection:"column", gap:6 }}>
                     {histMonths.map(h => (
@@ -1296,14 +1084,14 @@ export default function Vatsu() {
           </div>
         )}
 
-        {/* -- GOALS -- */}
+        {/* ── GOALS ── */}
         {tab === "goals" && (
           <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
             <div style={{ background:"linear-gradient(135deg,#071a14,#050f0e)", border:"1px solid #1dd1a133", borderRadius:16, padding:"13px 18px", display:"flex", alignItems:"flex-start", gap:10 }}>
               <span style={{ fontSize:18 }}>🔗</span>
               <div>
                 <div style={{ fontSize:13, fontWeight:700, color:"#1dd1a1", fontFamily:TF }}>Goals are linked to your Dashboard</div>
-                <div style={{ fontSize:12, color:T.textSub, marginTop:3, lineHeight:1.6, fontFamily:BODY }}>Contributing to a goal automatically records a <b style={{ color:T.text }}>Savings & Investments</b> expense for {MONTHS[activeMonth]}, reducing your remaining balance.</div>
+                <div style={{ fontSize:12, color:T.textSub, marginTop:3, lineHeight:1.6, fontFamily:BODY }}>Contributing to a goal automatically records a <b style={{ color:T.text }}>Savings &amp; Investments</b> expense for {MONTHS[activeMonth]}, reducing your remaining balance.</div>
               </div>
             </div>
             {/* Add goal form */}
@@ -1320,7 +1108,7 @@ export default function Vatsu() {
               </div>
             </div>
             {goals.length === 0
-              ? <div className="vcard" style={{ textAlign:"center", padding:"50px", color:T.textMuted, background:T.cardGrad }}><div style={{ fontSize:46, marginBottom:12 }}>🎯</div><div style={{ fontFamily:BODY }}>No goals yet  -  create one above</div></div>
+              ? <div className="vcard" style={{ textAlign:"center", padding:"50px", color:T.textMuted, background:T.cardGrad }}><div style={{ fontSize:46, marginBottom:12 }}>🎯</div><div style={{ fontFamily:BODY }}>No goals yet — create one above</div></div>
               : <div style={{ display:"flex", flexDirection:"column", gap:18 }}>
                 {goals.map((g, gi) => {
                   const gc   = GCOLS[gi % GCOLS.length];
@@ -1362,7 +1150,7 @@ export default function Vatsu() {
                           </div>
                           <div style={{ display:"flex", gap:8, alignItems:"center" }}>
                             {done && <span style={{ padding:"4px 12px", borderRadius:20, background:gc+"22", color:gc, fontSize:11, fontWeight:700, border:"1px solid " + gc+"44", animation:"vPulse 2s infinite" }}>🎉 Achieved!</span>}
-                            <button onClick={() => deleteGoal(g.id)} style={{ background:"#ff6b6b18", border:"1px solid #ff6b6b22", color:"#ff6b6b", borderRadius:9, width:30, height:30, cursor:"pointer", fontSize:13 }}>x</button>
+                            <button onClick={() => deleteGoal(g.id)} style={{ background:"#ff6b6b18", border:"1px solid #ff6b6b22", color:"#ff6b6b", borderRadius:9, width:30, height:30, cursor:"pointer", fontSize:13 }}>✕</button>
                           </div>
                         </div>
                         {/* Stats */}
@@ -1399,10 +1187,10 @@ export default function Vatsu() {
                         {!hasDeadline ? (
                           <div style={{ marginBottom:16, padding:"12px 16px", background:T.surface2, border:"1px solid " + T.border, borderRadius:12 }}>
                             <div style={{ fontSize:13, fontWeight:700, color:T.text, marginBottom:4, fontFamily:TF }}>📅 No deadline set</div>
-                            <div style={{ fontSize:11, color:T.textSub, marginBottom:10, fontFamily:BODY }}>Set a date  -  Vatsu auto-calculates your required monthly savings.</div>
+                            <div style={{ fontSize:11, color:T.textSub, marginBottom:10, fontFamily:BODY }}>Set a date — Vatsu auto-calculates your required monthly savings.</div>
                             <div style={{ display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
                               <input type="date" min={new Date().toISOString().split("T")[0]} value={dlEdits[g.id] || ""} onChange={e => setDlEdits(p => ({ ...p, [g.id]:e.target.value }))} style={{ ...IS, flex:1, minWidth:150, colorScheme: theme==="dark" ? "dark" : "light" }} />
-                              <Btn v="primary" onClick={() => { if(dlEdits[g.id]) saveDeadline(g.id, dlEdits[g.id]); }} sx={{ opacity: dlEdits[g.id] ? 1 : 0.4, whiteSpace:"nowrap" }}>v Set Deadline</Btn>
+                              <Btn v="primary" onClick={() => { if(dlEdits[g.id]) saveDeadline(g.id, dlEdits[g.id]); }} sx={{ opacity: dlEdits[g.id] ? 1 : 0.4, whiteSpace:"nowrap" }}>✓ Set Deadline</Btn>
                             </div>
                           </div>
                         ) : (
@@ -1420,20 +1208,20 @@ export default function Vatsu() {
                                 <div style={{ display:"flex", gap:8, alignItems:"center" }}>
                                   <span style={{ padding:"3px 10px", borderRadius:20, background:dlColor+"22", color:dlColor, fontSize:11, fontWeight:700, fontFamily:BODY }}>{dlLabel}</span>
                                   <button onClick={() => setDlEdits(p => g.id in p ? (({ [g.id]: _, ...rest }) => rest)(p) : { ...p, [g.id]: g.deadline||"" })} style={{ padding:"4px 10px", borderRadius:8, border:"1px solid " + T.border, background:T.surface2, color:T.textSub, fontSize:11, cursor:"pointer", fontFamily:BODY }}>
-                                    {g.id in dlEdits ? "x Cancel" : "✏️ Edit"}
+                                    {g.id in dlEdits ? "✕ Cancel" : "✏️ Edit"}
                                   </button>
                                 </div>
                               </div>
                               {g.id in dlEdits && (
                                 <div style={{ display:"flex", gap:8, marginBottom:12, flexWrap:"wrap", animation:"vFadeUp .2s ease both" }}>
                                   <input type="date" min={new Date().toISOString().split("T")[0]} value={dlEdits[g.id] || ""} onChange={e => setDlEdits(p => ({ ...p, [g.id]:e.target.value }))} style={{ ...IS, flex:1, minWidth:150, colorScheme: theme==="dark" ? "dark" : "light" }} />
-                                  <Btn v="primary" onClick={() => { if(dlEdits[g.id]) saveDeadline(g.id, dlEdits[g.id]); }} sx={{ opacity: dlEdits[g.id] ? 1 : 0.4, whiteSpace:"nowrap" }}>v Save</Btn>
+                                  <Btn v="primary" onClick={() => { if(dlEdits[g.id]) saveDeadline(g.id, dlEdits[g.id]); }} sx={{ opacity: dlEdits[g.id] ? 1 : 0.4, whiteSpace:"nowrap" }}>✓ Save</Btn>
                                 </div>
                               )}
                               <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:8, marginBottom:10 }}>
                                 {[
                                   { lbl:"Days Left", val: isOverdue ? "Overdue" : Math.abs(daysLeft)+"d", color:dlColor },
-                                  { lbl:"Months Left", val: isOverdue ? " - " : mthsLeft+"mo", color:dlColor },
+                                  { lbl:"Months Left", val: isOverdue ? "—" : mthsLeft+"mo", color:dlColor },
                                   { lbl:"Need/Month", val: done ? "Done!" : fmtINR(reqPerMo), color:"#1dd1a1" },
                                 ].map(t => (
                                   <div key={t.lbl} style={{ textAlign:"center", padding:"8px 6px", background:T.surface2, borderRadius:10, border:"1px solid " + T.border2 }}>
@@ -1457,7 +1245,7 @@ export default function Vatsu() {
                                   </div>
                                 ))}
                                 <div style={{ fontSize:11, color:T.textSub, marginTop:6, padding:"7px 10px", background: pct>=tenurePct?"#1dd1a108":"#ffa94d08", borderRadius:8, fontFamily:BODY }}>
-                                  {done ? "🏆 Goal achieved!" : isOverdue ? "⏰ Deadline passed. Update date or keep contributing." : pct >= tenurePct ? "🚀 Savings ahead of time  -  you're winning!" : "⚡ Need " + fmtINR(reqPerMo) + "/month to catch up."}
+                                  {done ? "🏆 Goal achieved!" : isOverdue ? "⏰ Deadline passed. Update date or keep contributing." : pct >= tenurePct ? "🚀 Savings ahead of time — you're winning!" : "⚡ Need " + fmtINR(reqPerMo) + "/month to catch up."}
                                 </div>
                               </div>
                             </div>
@@ -1483,11 +1271,11 @@ export default function Vatsu() {
           </div>
         )}
 
-        {/* -- LOANS -- */}
+        {/* ── LOANS ── */}
         {tab === "loans" && (
           <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
             <div className="vcard" style={{ background:"linear-gradient(135deg,#1a0e00,#120900)", borderColor:"#ffa94d33" }}>
-              <div style={{ fontSize:11, fontWeight:700, color:T.textSub, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:14, fontFamily:BODY }}>EMI Impact  -  {MONTHS[activeMonth]}</div>
+              <div style={{ fontSize:11, fontWeight:700, color:T.textSub, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:14, fontFamily:BODY }}>EMI Impact — {MONTHS[activeMonth]}</div>
               <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))", gap:14 }}>
                 {[["Total EMI",fmtINR(totalEMI),"#ffa94d"],["Active Loans",String(activeLoans.length),T.text],["Remaining",fmtINR(remaining),remaining<0?"#ff6b6b":"#1dd1a1"]].map(([l,v,c]) => (
                   <div key={l}><div style={{ fontSize:12, color:T.textSub, fontFamily:BODY }}>{l}</div><div style={{ fontSize:26, fontWeight:800, color:c, fontFamily:MONO, marginTop:4 }}>{v}</div></div>
@@ -1510,16 +1298,16 @@ export default function Vatsu() {
                         <div style={{ width:42, height:42, borderRadius:12, background:"#ffa94d22", border:"1px solid #ffa94d44", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20 }}>🏦</div>
                         <div>
                           <div style={{ fontWeight:700, color:T.text, fontSize:17, fontFamily:TF }}>{loan.bankName}</div>
-                          <div style={{ fontSize:12, color:T.textSub, marginTop:2, fontFamily:BODY }}>{loan.loanType} . Started {MONTHS[loan.startMonth]} {loan.startYear}</div>
+                          <div style={{ fontSize:12, color:T.textSub, marginTop:2, fontFamily:BODY }}>{loan.loanType} · Started {MONTHS[loan.startMonth]} {loan.startYear}</div>
                         </div>
                       </div>
                       <div style={{ display:"flex", gap:8 }}>
-                        <span style={{ padding:"4px 12px", borderRadius:20, background: isAct?"#ffa94d22":"#1a2e4a", color: isAct?"#ffa94d":T.textSub, fontSize:11, fontWeight:700, fontFamily:BODY }}>{isAct?"* Active":"* Closed"}</span>
-                        <button onClick={() => deleteLoan(loan.id)} style={{ background:"#ff6b6b18", border:"none", color:"#ff6b6b", borderRadius:8, width:30, height:30, cursor:"pointer" }}>x</button>
+                        <span style={{ padding:"4px 12px", borderRadius:20, background: isAct?"#ffa94d22":"#1a2e4a", color: isAct?"#ffa94d":T.textSub, fontSize:11, fontWeight:700, fontFamily:BODY }}>{isAct?"● Active":"● Closed"}</span>
+                        <button onClick={() => deleteLoan(loan.id)} style={{ background:"#ff6b6b18", border:"none", color:"#ff6b6b", borderRadius:8, width:30, height:30, cursor:"pointer" }}>✕</button>
                       </div>
                     </div>
                     <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))", gap:10, marginBottom:14 }}>
-                      {[["Principal",fmtINR(loan.principal),T.text],["Monthly EMI",fmtINR(loan.emi),"#ffa94d"],["Interest",loan.interestRate?loan.interestRate+"% p.a.":" - ",T.text]].map(([l,v,c]) => (
+                      {[["Principal",fmtINR(loan.principal),T.text],["Monthly EMI",fmtINR(loan.emi),"#ffa94d"],["Interest",loan.interestRate?loan.interestRate+"% p.a.":"—",T.text]].map(([l,v,c]) => (
                         <div key={l} style={{ background:T.surface2, borderRadius:11, padding:"10px 12px", border:"1px solid " + T.border2 }}>
                           <div style={{ fontSize:10, color:T.textSub, fontFamily:BODY, marginBottom:3 }}>{l}</div>
                           <div style={{ fontWeight:700, color:c, fontSize:14, fontFamily:MONO }}>{v}</div>
@@ -1545,195 +1333,126 @@ export default function Vatsu() {
           </div>
         )}
 
-        {/* -- CHALLENGES -- */}
+        {/* ── CHALLENGES ── */}
         {tab === "challenges" && (
           <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
-
-            {/* -- PLAYER CARD -- */}
-            <div style={{ background:"linear-gradient(135deg,#060f1c,#0a1628)", border:"1px solid "+lvl.color+"44", borderRadius:20, padding:"22px 24px", position:"relative", overflow:"hidden", boxShadow:"0 8px 32px "+lvl.color+"18" }}>
-              <div style={{ position:"absolute", top:-40, right:-40, width:180, height:180, borderRadius:"50%", background:lvl.color+"0e", filter:"blur(50px)", pointerEvents:"none" }} />
+            {/* Player card */}
+            <div style={{ background:"linear-gradient(135deg,#0a1628,#0d1f38)", border:"1px solid " + lvl.color+"44", borderRadius:20, padding:"20px 24px", position:"relative", overflow:"hidden", boxShadow:"0 8px 32px " + lvl.color+"18" }}>
+              <div style={{ position:"absolute", top:-40, right:-40, width:180, height:180, borderRadius:"50%", background:lvl.color+"10", filter:"blur(50px)", pointerEvents:"none" }} />
               <div style={{ position:"relative", display:"flex", gap:18, alignItems:"center", flexWrap:"wrap" }}>
-                {/* Avatar */}
-                <div style={{ width:68, height:68, borderRadius:"50%", background:"linear-gradient(135deg,"+lvl.color+"33,"+lvl.color+"11)", border:"3px solid "+lvl.color, display:"flex", alignItems:"center", justifyContent:"center", fontSize:30, flexShrink:0, boxShadow:"0 0 24px "+lvl.color+"55" }}>{lvl.icon}</div>
-                {/* Level info */}
-                <div style={{ flex:1, minWidth:160 }}>
-                  <div style={{ fontSize:10, color:T.textSub, textTransform:"uppercase", letterSpacing:"0.14em", marginBottom:3, fontFamily:BODY }}>Challenger Profile</div>
-                  <div style={{ fontSize:20, fontWeight:800, color:lvl.color, fontFamily:TF, lineHeight:1.1 }}>{lvl.label}</div>
-                  <div style={{ fontSize:13, color:T.textSub, margin:"4px 0 9px", fontFamily:BODY }}>
-                    <span style={{ color:"#ffd32a", fontWeight:700, fontFamily:MONO }}>{totalXP} XP</span>
-                    {lvl.next ? " . "+Math.max(0,lvl.next.min-totalXP)+" XP to "+lvl.next.label : " . Max Level!"}
-                  </div>
+                <div style={{ width:70, height:70, borderRadius:"50%", background:"linear-gradient(135deg," + lvl.color+"33," + lvl.color+"11)", border:"3px solid " + lvl.color, display:"flex", alignItems:"center", justifyContent:"center", fontSize:30, flexShrink:0, boxShadow:"0 0 24px " + lvl.color+"44" }}>{lvl.icon}</div>
+                <div style={{ flex:1, minWidth:170 }}>
+                  <div style={{ fontSize:10, color:T.textSub, textTransform:"uppercase", letterSpacing:"0.14em", marginBottom:4, fontFamily:BODY }}>Challenger Profile</div>
+                  <div style={{ fontSize:21, fontWeight:800, color:lvl.color, fontFamily:TF, lineHeight:1 }}>{lvl.label}</div>
+                  <div style={{ fontSize:13, color:T.textSub, margin:"4px 0 8px", fontFamily:BODY }}><span style={{ color:"#ffd32a", fontWeight:700, fontFamily:MONO }}>{totalXP} XP</span>{lvl.next ? " · " + (lvl.next.min - totalXP) + " XP to next level" : ""}</div>
                   <div style={{ height:7, background:T.border, borderRadius:99 }}>
-                    <div style={{ height:7, width:lvl.pct+"%", background:"linear-gradient(90deg,"+lvl.color+"88,"+lvl.color+")", borderRadius:99, transition:"width .9s ease", boxShadow:"0 0 8px "+lvl.color+"55" }} />
+                    <div style={{ height:7, width:lvl.pct+"%", background:"linear-gradient(90deg," + lvl.color+"88," + lvl.color+")", borderRadius:99, transition:"width .8s", boxShadow:"0 0 8px " + lvl.color+"55" }} />
                   </div>
                 </div>
-                {/* Stats */}
-                <div style={{ display:"flex", gap:20, flexWrap:"wrap" }}>
-                  {[
-                    ["Completed", allCompletedChalls.length, "#1dd1a1"],
-                    ["Active",    activeChalls.filter(c=>{ const t=CHALL.find(x=>x.id===c.id); if(!t)return false; const p=t.getP(curMonth,totalInc); return !t.isWin(p,totalInc); }).length, "#ffd32a"],
-                    ["Badges",    earnedBadges.length, "#cd84f1"],
-                  ].map(([l,v,c]) => (
+                <div style={{ display:"flex", gap:18, flexWrap:"wrap" }}>
+                  {[["Done",allCompletedChalls.length,"#1dd1a1"],["Active",activeChalls.length,"#ffd32a"],["Badges",earnedBadges.length,"#cd84f1"]].map(([l,v,c]) => (
                     <div key={l} style={{ textAlign:"center" }}>
-                      <div style={{ fontSize:26, fontWeight:800, color:c, fontFamily:MONO, lineHeight:1, textShadow:"0 0 12px "+c+"66" }}>{v}</div>
-                      <div style={{ fontSize:11, color:T.textSub, marginTop:3, fontFamily:BODY }}>{l}</div>
+                      <div style={{ fontSize:24, fontWeight:800, color:c, fontFamily:MONO }}>{v}</div>
+                      <div style={{ fontSize:11, color:T.textSub, marginTop:2, fontFamily:BODY }}>{l}</div>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
-
-            {/* -- BADGES -- */}
+            {/* Badges */}
             {earnedBadges.length > 0 && (
               <div className="vcard" style={{ background:T.cardGrad }}>
                 <div style={{ fontSize:11, fontWeight:700, color:T.textSub, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:12, fontFamily:BODY }}>🏅 Earned Badges</div>
-                <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+                <div style={{ display:"flex", gap:9, flexWrap:"wrap" }}>
                   {earnedBadges.map(t => (
-                    <div key={t.id} style={{ display:"flex", alignItems:"center", gap:7, padding:"7px 14px", borderRadius:30, background:t.color+"22", border:"1px solid "+t.color+"44", transition:"all .2s", cursor:"default" }}
-                      onMouseEnter={e=>{e.currentTarget.style.transform="scale(1.06)";}} onMouseLeave={e=>{e.currentTarget.style.transform="scale(1)";}}>
-                      <span style={{ fontSize:16 }}>{t.icon}</span>
+                    <div key={t.id} style={{ display:"flex", alignItems:"center", gap:7, padding:"7px 14px", borderRadius:30, background:t.color+"22", border:"1px solid " + t.color+"44" }}>
+                      <span style={{ fontSize:17 }}>{t.icon}</span>
                       <span style={{ fontSize:12, fontWeight:700, color:t.color, fontFamily:BODY }}>{t.badge.split(" ").slice(1).join(" ")}</span>
                     </div>
                   ))}
                 </div>
               </div>
             )}
-
-            {/* -- ACTIVE CHALLENGES -- */}
-            {activeChalls.length > 0 ? (
+            {/* Active challenges */}
+            {activeChalls.length > 0 && (
               <div>
-                <div style={{ fontSize:11, fontWeight:700, color:T.textSub, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:12, fontFamily:BODY }}>⚔️ Active This Month  -  {MONTHS[activeMonth]}</div>
-                <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-                  {activeChalls.map(c => {
-                    const tpl = CHALL.find(t => t.id === c.id);
-                    if (!tpl) return null;
-                    const prog = tpl.getP(curMonth, totalInc);
-                    const won  = tpl.isWin(prog, totalInc);
-                    const pct  = tpl.pct(prog, totalInc);
-                    const ds   = DIFF_STYLE[tpl.diff] || DIFF_STYLE.Easy;
-                    return (
-                      <div key={c.id} style={{ padding:"16px 20px", background:won?"linear-gradient(135deg,#071a10,#050e09)":T.cardGrad, border:"1px solid "+(won?tpl.color+"88":T.border), borderRadius:16, transition:"all .25s", boxShadow:won?"0 4px 20px "+tpl.color+"22":"none" }}>
-                        {/* Header row */}
-                        <div style={{ display:"flex", gap:12, alignItems:"center", marginBottom:12 }}>
-                          <div style={{ width:46, height:46, borderRadius:12, background:tpl.color+"22", border:"1px solid "+tpl.color+"44", display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, flexShrink:0 }}>{tpl.icon}</div>
-                          <div style={{ flex:1 }}>
-                            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:6 }}>
-                              <span style={{ fontWeight:700, color:T.text, fontSize:15, fontFamily:TF }}>{tpl.label}</span>
-                              <div style={{ display:"flex", gap:6, alignItems:"center" }}>
-                                <span style={{ padding:"2px 8px", borderRadius:20, background:ds.bg, color:ds.color, fontSize:10, fontWeight:700, fontFamily:BODY }}>{ds.stars} {tpl.diff}</span>
-                                {won
-                                  ? <span style={{ padding:"3px 10px", borderRadius:20, background:"#1dd1a122", color:"#1dd1a1", fontSize:11, fontWeight:700, animation:"vPulse 2s infinite" }}>🎉 Completed!</span>
-                                  : <span style={{ padding:"3px 10px", borderRadius:20, background:"#ffa94d22", color:"#ffa94d", fontSize:11, fontWeight:700 }}>⚡ In Progress</span>
-                                }
-                              </div>
+                <div style={{ fontSize:11, fontWeight:700, color:T.textSub, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:12, fontFamily:BODY }}>⚔️ Active This Month</div>
+                {activeChalls.map(c => {
+                  const tpl = CHALL.find(t => t.id === c.id);
+                  if (!tpl) return null;
+                  const mInc = curMonth.incomeSources.reduce((s,x) => s+x.amount, 0);
+                  const prog = tpl.getP(curMonth, mInc);
+                  const won  = tpl.isWin(prog, mInc);
+                  const pct  = tpl.pct(prog, mInc);
+                  const ds   = DIFF_STYLE[tpl.diff] || DIFF_STYLE.Easy;
+                  return (
+                    <div key={c.id} onClick={() => setChallDetail(c.id)} style={{ cursor:"pointer", padding:"16px 20px", background:T.cardGrad, border:"1px solid " + (won ? tpl.color+"88" : T.border), borderRadius:16, marginBottom:10, transition:"all .25s" }}>
+                      <div style={{ display:"flex", gap:12, alignItems:"center", flexWrap:"wrap" }}>
+                        <div style={{ width:48, height:48, borderRadius:13, background:tpl.color+"22", border:"1px solid " + tpl.color+"44", display:"flex", alignItems:"center", justifyContent:"center", fontSize:24, flexShrink:0 }}>{tpl.icon}</div>
+                        <div style={{ flex:1 }}>
+                          <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4, flexWrap:"wrap", gap:6 }}>
+                            <span style={{ fontWeight:700, color:T.text, fontSize:15, fontFamily:TF }}>{tpl.label}</span>
+                            <div style={{ display:"flex", gap:6 }}>
+                              <span style={{ padding:"2px 8px", borderRadius:20, background:ds.bg, color:ds.color, fontSize:10, fontWeight:700, fontFamily:BODY }}>{ds.stars} {tpl.diff}</span>
+                              {won ? <span style={{ padding:"2px 9px", borderRadius:20, background:"#1dd1a122", color:"#1dd1a1", fontSize:11, fontWeight:700 }}>🎉 Done!</span> : <span style={{ padding:"2px 9px", borderRadius:20, background:"#ffa94d22", color:"#ffa94d", fontSize:11, fontWeight:700 }}>⚡ Active</span>}
                             </div>
-                            <div style={{ fontSize:11, color:T.textMuted, marginTop:2, fontFamily:BODY }}>Joined {c.joined} . ⏱ {tpl.days} day challenge</div>
+                          </div>
+                          <div style={{ height:7, background:T.border, borderRadius:99, marginBottom:4 }}>
+                            <div style={{ height:7, width:pct+"%", background:"linear-gradient(90deg,"+tpl.color+"88,"+tpl.color+")", borderRadius:99, transition:"width .6s", boxShadow:"0 0 6px " + tpl.color+"55" }} />
+                          </div>
+                          <div style={{ display:"flex", justifyContent:"space-between" }}>
+                            <span style={{ fontSize:11, color:T.textSub, fontFamily:BODY }}>{tpl.metric(prog, mInc)}</span>
+                            <span style={{ fontSize:11, color:"#ffd32a", fontWeight:700, fontFamily:MONO }}>+{tpl.xp} XP</span>
                           </div>
                         </div>
-                        {/* Progress bar */}
-                        <div style={{ height:8, background:T.border, borderRadius:99, overflow:"hidden", marginBottom:6 }}>
-                          <div style={{ height:8, width:pct+"%", background:"linear-gradient(90deg,"+tpl.color+"88,"+tpl.color+")", borderRadius:99, transition:"width .7s cubic-bezier(.34,1.56,.64,1)", boxShadow:"0 0 8px "+tpl.color+"55" }} />
-                        </div>
-                        {/* Metric + XP + abandon */}
-                        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:8 }}>
-                          <span style={{ fontSize:12, color:T.textSub, fontFamily:BODY, flex:1 }}>{tpl.metric(prog, totalInc)}</span>
-                          <div style={{ display:"flex", gap:10, alignItems:"center" }}>
-                            <span style={{ fontSize:11, fontWeight:700, color:"#ffd32a", fontFamily:MONO }}>+{tpl.xp} XP</span>
-                            {!won && (
-                              <button onClick={() => abandonChallenge(c.id)}
-                                style={{ padding:"3px 9px", borderRadius:8, border:"1px solid #ff6b6b33", background:"#ff6b6b12", color:"#ff6b6b", fontSize:10, cursor:"pointer", fontFamily:BODY }}
-                                title="Abandon this challenge">
-                                Abandon
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                        {/* Win tip */}
-                        {!won && (
-                          <div style={{ marginTop:10, padding:"8px 12px", background:tpl.color+"0e", borderRadius:8, fontSize:11, color:tpl.color, fontFamily:BODY }}>
-                            💡 {tpl.tips[0]}
-                          </div>
-                        )}
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : (
-              /* Empty active state */
-              <div style={{ padding:"28px 24px", background:T.cardGrad, border:"1px solid "+T.border, borderRadius:18, textAlign:"center" }}>
-                <div style={{ fontSize:40, marginBottom:12 }}>🎯</div>
-                <div style={{ fontSize:16, fontWeight:700, color:T.text, fontFamily:TF, marginBottom:6 }}>No active challenges yet</div>
-                <div style={{ fontSize:13, color:T.textSub, fontFamily:BODY, lineHeight:1.7, maxWidth:320, margin:"0 auto 16px" }}>
-                  Pick a challenge below and tap Accept. Each one you complete earns XP and a badge!
-                </div>
-                <div style={{ display:"flex", gap:8, justifyContent:"center", flexWrap:"wrap" }}>
-                  {["🌱 Start small","⚡ Earn XP","🏅 Win badges","📈 Build habits"].map(t => (
-                    <span key={t} style={{ padding:"4px 12px", borderRadius:20, background:"#1dd1a118", color:"#1dd1a1", fontSize:11, fontFamily:BODY, fontWeight:600 }}>{t}</span>
-                  ))}
-                </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
-
-            {/* -- AVAILABLE CHALLENGES -- */}
+            {/* Available challenges */}
             <div>
-              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
-                <div style={{ fontSize:11, fontWeight:700, color:T.textSub, letterSpacing:"0.1em", textTransform:"uppercase", fontFamily:BODY }}>🎯 All Challenges ({CHALL.length})</div>
-                <div style={{ fontSize:11, color:T.textSub, fontFamily:BODY }}>Tap to see details</div>
+              <div style={{ display:"flex", justifyContent:"space-between", marginBottom:12, alignItems:"center" }}>
+                <div style={{ fontSize:11, fontWeight:700, color:T.textSub, letterSpacing:"0.1em", textTransform:"uppercase", fontFamily:BODY }}>🎯 Available Challenges</div>
+                <div style={{ fontSize:11, color:T.textSub, fontFamily:BODY }}>Tap to learn more</div>
               </div>
               <div className="vgrid" style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(270px,1fr))", gap:13 }}>
                 {CHALL.map((tpl, i) => {
-                  const already = !!activeChalls.find(c => c.id === tpl.id);
-                  const ds = DIFF_STYLE[tpl.diff] || DIFF_STYLE.Easy;
-                  const everWon = !!allCompletedChalls.find(c => c.id === tpl.id);
+                  const already = activeChalls.find(c => c.id === tpl.id);
+                  const ds = DIFF_STYLE[tpl.diff];
                   return (
-                    <div key={tpl.id} onClick={() => setChallDetail(tpl.id)}
-                      style={{ cursor:"pointer", padding:"18px 20px", background:T.cardGrad, border:"1px solid "+(already?tpl.color+"55":T.border), borderRadius:16, position:"relative", overflow:"hidden", transition:"all .22s", animation:"vFadeUp .4s "+(i*0.05)+"s both" }}
-                      onMouseEnter={e=>{e.currentTarget.style.borderColor=tpl.color+"88";e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 8px 24px "+tpl.color+"18";}}
-                      onMouseLeave={e=>{e.currentTarget.style.borderColor=already?tpl.color+"55":T.border;e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="none";}}>
-                      {/* Glow orb */}
-                      <div style={{ position:"absolute", top:-15, right:-15, width:90, height:90, borderRadius:"50%", background:tpl.color+"12", filter:"blur(22px)", pointerEvents:"none" }} />
-                      {/* Ever completed badge */}
-                      {everWon && <div style={{ position:"absolute", top:12, right:12, width:24, height:24, borderRadius:"50%", background:tpl.color, display:"flex", alignItems:"center", justifyContent:"center", fontSize:12 }}>v</div>}
+                    <div key={tpl.id} onClick={() => setChallDetail(tpl.id)} style={{ cursor:"pointer", padding:"18px 20px", background:T.cardGrad, border:"1px solid " + (already ? tpl.color+"55" : T.border), borderRadius:16, position:"relative", overflow:"hidden", transition:"all .25s", animation:"vFadeUp .4s " + (i*0.05) + "s both" }}>
+                      <div style={{ position:"absolute", top:-15, right:-15, width:90, height:90, borderRadius:"50%", background:tpl.color+"14", filter:"blur(22px)", pointerEvents:"none" }} />
                       <div style={{ display:"flex", alignItems:"center", gap:11, marginBottom:10 }}>
-                        <div style={{ width:46, height:46, borderRadius:12, background:tpl.color+"22", border:"1px solid "+tpl.color+"44", display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, flexShrink:0 }}>{tpl.icon}</div>
+                        <div style={{ width:46, height:46, borderRadius:12, background:tpl.color+"22", border:"1px solid " + tpl.color+"44", display:"flex", alignItems:"center", justifyContent:"center", fontSize:22 }}>{tpl.icon}</div>
                         <div>
                           <div style={{ fontWeight:800, color:T.text, fontSize:14, fontFamily:TF }}>{tpl.label}</div>
-                          <div style={{ display:"flex", gap:5, marginTop:4, flexWrap:"wrap" }}>
-                            <span style={{ padding:"2px 7px", borderRadius:20, background:ds.bg, color:ds.color, fontSize:9, fontWeight:700, fontFamily:BODY }}>{ds.stars} {tpl.diff}</span>
-                            <span style={{ padding:"2px 7px", borderRadius:20, background:"#ffd32a22", color:"#ffd32a", fontSize:9, fontWeight:700, fontFamily:MONO }}>+{tpl.xp} XP</span>
-                            <span style={{ padding:"2px 7px", borderRadius:20, background:T.border, color:T.textSub, fontSize:9, fontFamily:BODY }}>⏱ {tpl.days}d</span>
+                          <div style={{ display:"flex", gap:5, marginTop:4 }}>
+                            <span style={{ padding:"2px 7px", borderRadius:20, background:ds.bg, color:ds.color, fontSize:9, fontWeight:700 }}>{ds.stars} {tpl.diff}</span>
+                            <span style={{ padding:"2px 7px", borderRadius:20, background:"#ffd32a22", color:"#ffd32a", fontSize:9, fontWeight:700 }}>+{tpl.xp} XP</span>
                           </div>
                         </div>
                       </div>
-                      <div style={{ fontSize:12, color:T.textSub, lineHeight:1.6, marginBottom:9, fontFamily:BODY }}>{tpl.desc}</div>
-                      <div style={{ fontSize:11, color:tpl.color, padding:"6px 10px", background:tpl.color+"10", borderRadius:8, marginBottom:10, fontFamily:BODY, lineHeight:1.5 }}>
-                        💡 {tpl.why.length > 85 ? tpl.why.substring(0,85)+"…" : tpl.why}
-                      </div>
-                      <div style={{ padding:"7px 12px", borderRadius:9, textAlign:"center", fontSize:12, fontWeight:600, fontFamily:BODY,
-                        background: already ? "#1dd1a118" : tpl.color+"18",
-                        color:      already ? "#1dd1a1"   : tpl.color,
-                        border:     "1px solid "+(already ? "#1dd1a133" : tpl.color+"33"),
-                      }}>
-                        {already ? "v Active  -  tap for details" : "Tap to learn more & accept ->"}
+                      <div style={{ fontSize:12, color:T.textSub, lineHeight:1.6, marginBottom:10, fontFamily:BODY }}>{tpl.desc}</div>
+                      <div style={{ fontSize:11, color:tpl.color, padding:"6px 10px", background:tpl.color+"12", borderRadius:8, fontFamily:BODY }}>{tpl.why.substring(0,85)}…</div>
+                      <div style={{ marginTop:10, padding:"7px 12px", borderRadius:9, background: already ? "#1dd1a118" : tpl.color+"18", color: already ? "#1dd1a1" : tpl.color, fontSize:12, textAlign:"center", fontWeight:600, fontFamily:BODY, border:"1px solid " + (already ? "#1dd1a133" : tpl.color+"33") }}>
+                        {already ? "✓ Active this month" : "Tap to accept →"}
                       </div>
                     </div>
                   );
                 })}
               </div>
             </div>
-
           </div>
         )}
 
-        {/* -- AI ADVISOR -- */}
-        {tab === "invest" && <InvestTab totalInc={totalInc} totalExp={totalExp} totalEMI={totalEMI} remaining={remaining} savePct={savePct} goals={goals} loans={loans} histMonths={histMonths} netPosition={netPosition} theme={theme} />}
-
+        {/* ── AI ADVISOR ── */}
         {tab === "advisor" && <AIAdvisor monthlyData={monthlyData} goals={goals} loans={loans} activeMonth={activeMonth} activeYear={activeYear} theme={theme} allCats={allCats} totalInc={totalInc} totalExp={totalExp} curMonth={curMonth} />}
 
       </main>
 
-      {/* ======================= MODALS =============================== */}
+      {/* ═══════════════════════ MODALS ═══════════════════════════════ */}
 
       {/* Income modal */}
       <Modal show={showIncome} onClose={() => setShowIncome(false)} title="Add Income Source" sub="Counted for the selected month only.">
@@ -1828,7 +1547,7 @@ export default function Vatsu() {
           </div>
           <div style={{ display:"flex", gap:10 }}>
             <Btn full onClick={() => setShowCatModal(false)}>Cancel</Btn>
-            <Btn v="primary" full onClick={addCustomCat} sx={{ opacity: catForm.label.trim() ? 1 : 0.4 }}>v Create Category</Btn>
+            <Btn v="primary" full onClick={addCustomCat} sx={{ opacity: catForm.label.trim() ? 1 : 0.4 }}>✓ Create Category</Btn>
           </div>
         </div>
       </Modal>
@@ -1841,7 +1560,7 @@ export default function Vatsu() {
               <div key={c.id} style={{ display:"flex", alignItems:"center", gap:11, padding:"11px 14px", background:T.surface2, borderRadius:12, border:"1px solid " + c.color+"33" }}>
                 <div style={{ width:38, height:38, borderRadius:10, background:c.color+"22", border:"1px solid " + c.color+"44", display:"flex", alignItems:"center", justifyContent:"center", fontSize:19, flexShrink:0 }}>{c.icon}</div>
                 <span style={{ flex:1, fontWeight:700, color:c.color, fontFamily:TF }}>{c.label}</span>
-                <button onClick={() => deleteCustomCat(c.id)} style={{ background:"#ff6b6b18", border:"1px solid #ff6b6b33", color:"#ff6b6b", borderRadius:8, width:30, height:30, cursor:"pointer", fontSize:13 }}>x</button>
+                <button onClick={() => deleteCustomCat(c.id)} style={{ background:"#ff6b6b18", border:"1px solid #ff6b6b33", color:"#ff6b6b", borderRadius:8, width:30, height:30, cursor:"pointer", fontSize:13 }}>✕</button>
               </div>
             ))
           }
@@ -1894,9 +1613,9 @@ export default function Vatsu() {
               <div style={{ display:"flex", gap:10 }}>
                 <Btn full onClick={() => setChallDetail(null)}>Maybe Later</Btn>
                 {already
-                  ? <div style={{ flex:2, padding:11, borderRadius:12, background:"#1dd1a122", color:"#1dd1a1", fontWeight:700, fontSize:13, textAlign:"center", fontFamily:BODY, border:"1px solid #1dd1a133" }}>v Active this month!</div>
+                  ? <div style={{ flex:2, padding:11, borderRadius:12, background:"#1dd1a122", color:"#1dd1a1", fontWeight:700, fontSize:13, textAlign:"center", fontFamily:BODY, border:"1px solid #1dd1a133" }}>✓ Active this month!</div>
                   : <button onClick={() => joinChallenge(sel)} style={{ flex:2, padding:11, borderRadius:12, border:"none", background:"linear-gradient(135deg," + sel.color + "," + sel.color + "cc)", color:"#060d18", fontWeight:800, fontSize:14, cursor:"pointer", fontFamily:BODY, boxShadow:"0 4px 18px " + sel.color+"44" }}>
-                    🚀 Accept  -  +{sel.xp} XP
+                    🚀 Accept — +{sel.xp} XP
                   </button>
                 }
               </div>
@@ -1908,1502 +1627,429 @@ export default function Vatsu() {
   );
 }
 
-/* --- AI ADVISOR ------------------------------------------------------- */
-
-/* ==================================================================
-   INVEST TAB  -  Investment promotion, SIP calculator, readiness score
-================================================================== */
-
-/* Top performing instruments - curated Indian market data */
-const INVEST_INSTRUMENTS = [
-  {
-    id:"nifty50",  cat:"Mutual Fund / ETF",  icon:"📊",  color:"#1dd1a1",
-    name:"Nifty 50 Index Fund",
-    fullName:"Nifty 50 Index Fund (UTI / HDFC / SBI)",
-    cagr:13.2, risk:"Low-Medium", horizon:"5+ years", minSIP:500,
-    why:"Tracks India's top 50 companies. Best starting point for beginners.",
-    ticker:"NIFTY50",
-    highlight:"Most recommended for first-time investors",
-  },
-  {
-    id:"nifty_next", cat:"Mutual Fund / ETF", icon:"🚀", color:"#54a0ff",
-    name:"Nifty Next 50 Index Fund",
-    fullName:"Nifty Next 50 Index Fund (UTI / ICICI)",
-    cagr:14.8, risk:"Medium", horizon:"7+ years", minSIP:500,
-    why:"The next 50 large-cap companies  -  higher growth potential than Nifty 50.",
-    ticker:"NIFTYNXT50",
-    highlight:"Higher return potential, slightly more volatile",
-  },
-  {
-    id:"elss", cat:"Tax Saving (80C)", icon:"🏛️", color:"#ffd32a",
-    name:"ELSS Mutual Fund",
-    fullName:"ELSS  -  Equity Linked Savings Scheme",
-    cagr:14.1, risk:"Medium", horizon:"3+ years", minSIP:500,
-    why:"Only 3-year lock-in. Saves tax under Section 80C (up to ₹1.5L/year) + equity returns.",
-    ticker:"ELSS",
-    highlight:"Best tax-saving investment in India",
-  },
-  {
-    id:"sensex", cat:"Mutual Fund / ETF", icon:"📈", color:"#ff9f43",
-    name:"Sensex Index Fund",
-    fullName:"BSE Sensex Index Fund (Mirae / Tata)",
-    cagr:12.9, risk:"Low-Medium", horizon:"5+ years", minSIP:100,
-    why:"Tracks BSE's top 30 blue-chip companies. Ultra-low expense ratio.",
-    ticker:"SENSEX",
-    highlight:"Lowest risk equity option",
-  },
-  {
-    id:"ppf", cat:"Government Scheme", icon:"🏦", color:"#00d2d3",
-    name:"PPF (Public Provident Fund)",
-    fullName:"PPF  -  Government of India",
-    cagr:7.1, risk:"Zero", horizon:"15 years", minSIP:500,
-    why:"Government-backed, tax-free returns. 80C benefit. Absolutely safe.",
-    ticker:"PPF",
-    highlight:"100% safe, tax-free, government-backed",
-  },
-  {
-    id:"sgb", cat:"Gold", icon:"🥇", color:"#f0c040",
-    name:"Sovereign Gold Bond (SGB)",
-    fullName:"Sovereign Gold Bond  -  RBI",
-    cagr:10.5, risk:"Low", horizon:"8 years", minSIP:null,
-    why:"Government gold bonds + 2.5% annual interest. Better than physical gold.",
-    ticker:"SGB",
-    highlight:"Best way to invest in gold",
-  },
-  {
-    id:"fd", cat:"Fixed Deposit", icon:"🔒", color:"#a29bfe",
-    name:"Bank FD (1-3 Year)",
-    fullName:"Fixed Deposit  -  Top Indian Banks",
-    cagr:7.5, risk:"Zero", horizon:"1-3 years", minSIP:1000,
-    why:"Safe, predictable returns. Good for short-term goals and emergency parking.",
-    ticker:"FD",
-    highlight:"Best for short-term, risk-free parking",
-  },
-  {
-    id:"nps", cat:"Retirement", icon:"🌅", color:"#cd84f1",
-    name:"NPS (National Pension System)",
-    fullName:"NPS  -  PFRDA",
-    cagr:10.8, risk:"Low-Medium", horizon:"Until 60", minSIP:500,
-    why:"Extra ₹50,000 tax deduction under 80CCD(1B) beyond 80C limit. Retirement-focused.",
-    ticker:"NPS",
-    highlight:"Extra ₹50K tax saving beyond 80C",
-  },
-];
-
-/* SIP wealth projection using compound interest */
-function sipProjection(monthlyAmt, years, cagr) {
-  const r = cagr / 100 / 12;
-  const n = years * 12;
-  if (r === 0) return monthlyAmt * n;
-  return Math.round(monthlyAmt * ((Math.pow(1 + r, n) - 1) / r) * (1 + r));
-}
-
-function InvestTab({ totalInc, totalExp, totalEMI, remaining, savePct, goals, loans, histMonths, netPosition, theme }) {
-  const T   = THEMES[theme];
-  const IS2 = iStyle(T);
-
-  /* -- Section state -- */
-  const [activeSection, setActiveSection] = useState("overview");
-  // overview | instruments | compare | goalplanner | readiness
-
-  /* -- Market data state (fetched live) -- */
-  const [market, setMarket]       = useState(null);
-  const [marketLoad, setMarketLoad] = useState(false);
-  const [marketErr,  setMarketErr]  = useState(false);
-
-  /* -- Comparison state -- */
-  const [cmpA, setCmpA] = useState("nifty50");
-  const [cmpB, setCmpB] = useState("elss");
-
-  /* -- Goal planner state -- */
-  const [gpTarget,  setGpTarget ] = useState("");
-  const [gpYears,   setGpYears  ] = useState(5);
-  const [gpExist,   setGpExist  ] = useState("");
-  const [gpResult,  setGpResult ] = useState(null);
-
-  /* -- Instruments expand -- */
-  const [selInst, setSelInst] = useState(null);
-
-  /* -- Core calculations -- */
-  const investable  = Math.max(0, remaining);
-  const recommended = totalInc > 0 ? Math.round(totalInc * 0.20) : 0;
-  const allTimeSurplus = histMonths.reduce((s,h) => s + Math.max(0, h.income - h.expenses), 0);
-  const emiPct      = totalInc > 0 ? Math.round(totalEMI / totalInc * 100) : 0;
-  const hasEmergency= goals.some(g => g.label.toLowerCase().includes("emergency") && g.saved >= g.target * 0.8);
-  const alreadySaving = goals.reduce((s,g) => s + g.saved, 0);
-
-  /* -- Readiness -- */
-  const readiness = [
-    { id:"income",    label:"Income tracked",              done: totalInc > 0,       tip:"Add income in the Dashboard" },
-    { id:"emergency", label:"Emergency fund started",      done: hasEmergency,        tip:"Create an Emergency Fund goal (6x expenses)" },
-    { id:"emi",       label:"EMI under 40% of income",     done: emiPct <= 40,        tip:"Current EMI: "+emiPct+"%  -  keep under 30%" },
-    { id:"saving20",  label:"Saving 20%+ of income",       done: savePct >= 20,       tip:"Currently "+Math.round(savePct)+"%  -  target 20%" },
-    { id:"surplus",   label:"Monthly surplus > ₹500",      done: remaining > 500,     tip:"Need at least ₹500 surplus to start SIP" },
-    { id:"goal",      label:"At least one savings goal",   done: goals.length > 0,    tip:"Create a goal in the Goals tab" },
-  ];
-  const readyScore = Math.round(readiness.filter(r=>r.done).length / readiness.length * 100);
-  const readyColor = readyScore >= 80 ? "#1dd1a1" : readyScore >= 50 ? "#ffd32a" : "#ff6b6b";
-  const readyLabel = readyScore >= 80 ? "Ready to Invest!" : readyScore >= 50 ? "Almost Ready" : "Build Foundation First";
-
-  /* -- Fetch live market data via Yahoo Finance proxy -- */
-  useEffect(() => {
-    if (activeSection !== "overview") return;
-    setMarketLoad(true);
-    setMarketErr(false);
-    const symbols = [
-      { key:"nifty",  sym:"^NSEI",   label:"Nifty 50",  color:"#1dd1a1", icon:"📊" },
-      { key:"sensex", sym:"^BSESN",  label:"Sensex",    color:"#54a0ff", icon:"📈" },
-      { key:"gold",   sym:"GC=F",    label:"Gold (USD)", color:"#f0c040", icon:"🥇" },
-      { key:"usd",    sym:"USDINR=X",label:"USD/INR",   color:"#ffa94d", icon:"💱" },
-    ];
-    // Use a CORS-friendly endpoint
-    const base = "https://query1.finance.yahoo.com/v8/finance/chart/";
-    Promise.all(
-      symbols.map(s =>
-        fetch(base + encodeURIComponent(s.sym) + "?interval=1d&range=2d", {
-          headers: { "Accept": "application/json" }
-        })
-        .then(r => r.json())
-        .then(d => {
-          const q = d?.chart?.result?.[0];
-          if (!q) return { ...s, price:null, change:null, changePct:null };
-          const closes = q.indicators?.quote?.[0]?.close || [];
-          const price  = closes[closes.length - 1];
-          const prev   = closes[closes.length - 2] || closes[0];
-          const change = price && prev ? price - prev : null;
-          const changePct = change && prev ? (change/prev)*100 : null;
-          return { ...s, price, change, changePct };
-        })
-        .catch(() => ({ ...s, price:null, change:null, changePct:null }))
-      )
-    ).then(results => {
-      const obj = {};
-      results.forEach(r => { obj[r.key] = r; });
-      setMarket(obj);
-      setMarketLoad(false);
-    }).catch(() => { setMarketErr(true); setMarketLoad(false); });
-  }, [activeSection]);
-
-  /* -- Market mood derived from Nifty movement -- */
-  const marketMood = (() => {
-    if (!market?.nifty?.changePct) return null;
-    const pct = market.nifty.changePct;
-    if (pct >= 1.5)  return { mood:"Strong Bull",   icon:"🚀", color:"#1dd1a1", advice:"Markets are surging. Great time to stay invested. Avoid panic-buying at peaks." };
-    if (pct >= 0.3)  return { mood:"Mild Bull",     icon:"📈", color:"#00b894", advice:"Positive sentiment. SIPs running on schedule are benefiting. Continue as planned." };
-    if (pct >= -0.3) return { mood:"Sideways",      icon:"⚖️", color:"#ffd32a", advice:"Markets are flat. A good time to review your portfolio allocation." };
-    if (pct >= -1.5) return { mood:"Mild Bear",     icon:"📉", color:"#ffa94d", advice:"Minor correction. Don't stop your SIPs  -  you're buying more units at lower prices!" };
-    return              { mood:"Strong Bear",   icon:"🔴", color:"#ff6b6b", advice:"Market is falling sharply. This is an opportunity  -  increase SIP amount if possible. Never sell in panic." };
-  })();
-
-  /* -- Goal planner compute -- */
-  function computeGoalPlan() {
-    const target  = parseFloat(gpTarget);
-    const exist   = parseFloat(gpExist) || 0;
-    if (!target || target <= 0 || gpYears <= 0) return;
-    const stillNeeded = Math.max(0, target - exist);
-    // How much SIP needed at different CAGRs
-    const plans = [
-      { label:"Conservative (PPF 7%)",    cagr:7.1,  color:"#00d2d3", icon:"🏦" },
-      { label:"Balanced (Nifty 50 12%)",  cagr:12,   color:"#1dd1a1", icon:"📊" },
-      { label:"Growth (ELSS 14%)",        cagr:14.1, color:"#ffd32a", icon:"🏛️" },
-      { label:"Aggressive (Equity 16%)",  cagr:16,   color:"#ff9f43", icon:"🚀" },
-    ].map(plan => {
-      const r = plan.cagr / 100 / 12;
-      const n = gpYears * 12;
-      // Required monthly SIP = FV * r / ((1+r)^n - 1) / (1+r)
-      const sipNeeded = r === 0
-        ? Math.ceil(stillNeeded / n)
-        : Math.ceil(stillNeeded * r / ((Math.pow(1+r,n)-1) * (1+r)));
-      const totalInvested = sipNeeded * n;
-      const gains = Math.max(0, target - exist - totalInvested);
-      const feasible = investable > 0 ? sipNeeded <= investable * 0.9 : true;
-      return { ...plan, sipNeeded, totalInvested, gains, feasible };
-    });
-    setGpResult({ target, exist, stillNeeded, years:gpYears, plans });
-  }
-
-  /* -- Comparison instrument lookup -- */
-  const instA = INVEST_INSTRUMENTS.find(x => x.id === cmpA);
-  const instB = INVEST_INSTRUMENTS.find(x => x.id === cmpB);
-
-  /* -- Section tabs -- */
-  const SECTIONS = [
-    { id:"overview",     label:"🏠 Overview"      },
-    { id:"instruments",  label:"📊 Instruments"   },
-    { id:"compare",      label:"⚖️ Compare"        },
-    { id:"goalplanner",  label:"🎯 Goal Planner"  },
-    { id:"readiness",    label:"✅ Readiness"      },
-  ];
-
-  /* -- Format helpers -- */
-  function fmtPrice(val, sym) {
-    if (!val) return " - ";
-    if (sym === "gold") return "$"+val.toFixed(2);
-    if (sym === "usd")  return "₹"+val.toFixed(2);
-    return val >= 10000 ? (val/1000).toFixed(1)+"K" : val.toFixed(0);
-  }
-  function fmtChg(pct) {
-    if (pct == null) return " - ";
-    const sign = pct >= 0 ? "+" : "";
-    return sign + pct.toFixed(2) + "%";
-  }
-
-  return (
-    <div style={{ display:"flex", flexDirection:"column", gap:18 }}>
-
-      {/* -- Section pill tabs -- */}
-      <div style={{ display:"flex", gap:7, overflowX:"auto", padding:"2px 0", flexShrink:0 }}>
-        {SECTIONS.map(s => (
-          <button key={s.id} onClick={() => setActiveSection(s.id)}
-            style={{ whiteSpace:"nowrap", padding:"9px 16px", borderRadius:30,
-              border:"1px solid "+(activeSection===s.id?"#1dd1a155":T.border),
-              background:activeSection===s.id?"linear-gradient(135deg,#1dd1a122,#1dd1a108)":"transparent",
-              color:activeSection===s.id?"#1dd1a1":T.textSub,
-              fontSize:12, fontWeight:activeSection===s.id?700:500,
-              cursor:"pointer", fontFamily:BODY, transition:"all .2s",
-              boxShadow:activeSection===s.id?"0 0 12px #1dd1a122":"none",
-            }}>
-            {s.label}
-          </button>
-        ))}
-      </div>
-
-      {/* ======================================
-          OVERVIEW  -  market data + mood + opportunity
-      ====================================== */}
-      {activeSection === "overview" && (
-        <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
-
-          {/* Live Market Ticker */}
-          <div style={{ background:"linear-gradient(135deg,#060f1c,#0a1628)", border:"1px solid #1a2e4a", borderRadius:18, overflow:"hidden" }}>
-            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"12px 18px 10px", borderBottom:"1px solid #162234" }}>
-              <div style={{ fontSize:11, fontWeight:700, color:T.textSub, letterSpacing:"0.12em", textTransform:"uppercase", fontFamily:BODY }}>
-                📡 Live Market Data
-              </div>
-              <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-                {marketLoad && <div style={{ width:8,height:8,borderRadius:"50%",background:"#ffd32a",animation:"vPulse 1s infinite" }}/>}
-                {marketErr  && <span style={{ fontSize:10, color:"#ff6b6b", fontFamily:BODY }}>⚠️ Fetch failed  -  check connection</span>}
-                {!marketLoad && !marketErr && market && <span style={{ fontSize:10, color:"#1dd1a1", fontFamily:BODY }}>* Live</span>}
-              </div>
-            </div>
-            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))" }}>
-              {market
-                ? Object.values(market).map((m,i) => (
-                  <div key={m.key} style={{ padding:"14px 16px", borderRight:i<3?"1px solid #162234":"none", borderBottom:"none" }}>
-                    <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:5 }}>
-                      <span style={{ fontSize:14 }}>{m.icon}</span>
-                      <span style={{ fontSize:10, color:T.textSub, fontFamily:BODY, fontWeight:600 }}>{m.label}</span>
-                    </div>
-                    <div style={{ fontSize:18, fontWeight:800, color:m.color, fontFamily:MONO, lineHeight:1 }}>
-                      {fmtPrice(m.price, m.key)}
-                    </div>
-                    <div style={{ fontSize:11, color: m.changePct==null?"#4e7090":m.changePct>=0?"#1dd1a1":"#ff6b6b", marginTop:3, fontFamily:MONO, fontWeight:600 }}>
-                      {fmtChg(m.changePct)}
-                    </div>
-                  </div>
-                ))
-                : ["Nifty 50","Sensex","Gold","USD/INR"].map((l,i) => (
-                  <div key={l} style={{ padding:"14px 16px", borderRight:i<3?"1px solid #162234":"none" }}>
-                    <div style={{ fontSize:10, color:T.textSub, fontFamily:BODY, marginBottom:8 }}>{l}</div>
-                    <div style={{ height:20, background:T.border, borderRadius:6, animation:"vPulse 1.5s infinite" }}/>
-                  </div>
-                ))
-              }
-            </div>
-          </div>
-
-          {/* Market Mood Card */}
-          {marketMood && (
-            <div style={{ background:"linear-gradient(135deg,#060f1c,#0a1628)", border:"1.5px solid "+marketMood.color+"44", borderRadius:18, padding:"18px 22px", position:"relative", overflow:"hidden" }}>
-              <div style={{ position:"absolute", top:-30, right:-30, width:140, height:140, borderRadius:"50%", background:marketMood.color+"0a", filter:"blur(40px)", pointerEvents:"none" }}/>
-              <div style={{ position:"relative", display:"flex", gap:14, alignItems:"center", flexWrap:"wrap" }}>
-                <div style={{ width:56, height:56, borderRadius:"50%", background:marketMood.color+"22", border:"2px solid "+marketMood.color+"55", display:"flex", alignItems:"center", justifyContent:"center", fontSize:26, flexShrink:0, boxShadow:"0 0 18px "+marketMood.color+"44" }}>
-                  {marketMood.icon}
-                </div>
-                <div style={{ flex:1 }}>
-                  <div style={{ fontSize:10, color:T.textSub, letterSpacing:"0.12em", textTransform:"uppercase", fontFamily:BODY, marginBottom:3 }}>Today's Market Mood</div>
-                  <div style={{ fontSize:20, fontWeight:800, color:marketMood.color, fontFamily:TF, lineHeight:1, marginBottom:6 }}>{marketMood.mood}</div>
-                  <div style={{ fontSize:13, color:T.textSub, fontFamily:BODY, lineHeight:1.6 }}>{marketMood.advice}</div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Investable opportunity hero */}
-          <div style={{ background:"linear-gradient(135deg,#060f1c,#0a1a2e)", border:"1.5px solid #1dd1a155", borderRadius:18, padding:"20px 22px", position:"relative", overflow:"hidden" }}>
-            <div style={{ position:"absolute", top:-40, right:-40, width:180, height:180, borderRadius:"50%", background:"#1dd1a108", filter:"blur(50px)", pointerEvents:"none" }}/>
-            <div style={{ position:"relative" }}>
-              <div style={{ fontSize:11, fontWeight:700, color:T.textSub, letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:4, fontFamily:BODY }}>💡 This Month You Can Invest</div>
-              <div style={{ fontSize:40, fontWeight:800, color:"#1dd1a1", fontFamily:MONO, lineHeight:1, letterSpacing:"-1px", marginBottom:5 }}>
-                {fmtINR(investable)}
-              </div>
-              <div style={{ fontSize:12, color:T.textSub, fontFamily:BODY, marginBottom:16, lineHeight:1.6 }}>
-                {investable > 0
-                  ? "Your surplus after all expenses and EMIs. Investing even 50% ("+fmtINR(Math.round(investable*0.5))+") monthly in Nifty 50 grows to "+fmtINR(sipProjection(Math.round(investable*0.5),10,12))+" in 10 years."
-                  : "No surplus this month. Focus on cutting expenses first. Even ₹500/month in an index fund makes a huge difference over time."}
-              </div>
-              {/* Three allocation tiles */}
-              <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:10 }}>
-                {[["Conservative",25,"#54a0ff"],["Balanced",50,"#1dd1a1"],["Aggressive",75,"#ffd32a"]].map(([label,pct,color]) => (
-                  <div key={label} style={{ padding:"11px 8px", borderRadius:12, background:color+"15", border:"1px solid "+color+"33", textAlign:"center", cursor:"default" }}>
-                    <div style={{ fontSize:14, fontWeight:800, color, fontFamily:MONO }}>{fmtINR(Math.round(investable*pct/100))}</div>
-                    <div style={{ fontSize:10, color, marginTop:2, fontFamily:BODY, fontWeight:600 }}>{label} ({pct}%)</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Personalised allocation breakdown */}
-          {investable > 0 && (
-            <div style={{ background:"linear-gradient(135deg,#0b1421,#071018)", border:"1px solid #1a2e4a", borderRadius:18, padding:"18px 20px" }}>
-              <div style={{ fontSize:11, fontWeight:700, color:T.textSub, letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:14, fontFamily:BODY }}>
-                💼 Suggested Allocation for {fmtINR(investable)}/month
-              </div>
-              {[
-                { label:"Nifty 50 Index SIP",  pct:40, color:"#1dd1a1", icon:"📊", why:"Core wealth builder" },
-                { label:"ELSS Tax Saving",      pct:20, color:"#ffd32a", icon:"🏛️", why:"Saves 80C tax" },
-                { label:"PPF / NPS",            pct:20, color:"#00d2d3", icon:"🏦", why:"Safe government returns" },
-                { label:"Gold (SGB)",           pct:10, color:"#f0c040", icon:"🥇", why:"Inflation hedge" },
-                { label:"FD / Emergency",       pct:10, color:"#a29bfe", icon:"🔒", why:"Liquid safety" },
-              ].map(item => {
-                const amt = Math.round(investable * item.pct / 100);
-                return (
-                  <div key={item.label} style={{ display:"flex", gap:10, alignItems:"center", padding:"9px 0", borderBottom:"1px solid #162234" }}>
-                    <span style={{ fontSize:16, flexShrink:0, width:24 }}>{item.icon}</span>
-                    <div style={{ flex:1 }}>
-                      <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4 }}>
-                        <span style={{ fontWeight:600, color:T.text, fontSize:13, fontFamily:BODY }}>{item.label}</span>
-                        <span style={{ fontWeight:800, color:item.color, fontSize:14, fontFamily:MONO }}>{fmtINR(amt)}</span>
-                      </div>
-                      <div style={{ height:4, background:"#162234", borderRadius:99 }}>
-                        <div style={{ height:4, width:item.pct+"%", background:item.color, borderRadius:99, boxShadow:"0 0 4px "+item.color+"66" }}/>
-                      </div>
-                    </div>
-                    <span style={{ fontSize:10, color:T.textMuted, width:60, textAlign:"right", fontFamily:BODY }}>{item.why}</span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Quick stat tiles */}
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))", gap:10 }}>
-            {[
-              { label:"Recommended SIP",   value:fmtINR(recommended),    color:"#1dd1a1", icon:"💰", sub:"20% of income" },
-              { label:"Saved in Goals",     value:fmtINR(alreadySaving), color:"#cd84f1", icon:"🎯", sub:"total accumulated" },
-              { label:"Lifetime Surplus",   value:fmtINR(allTimeSurplus),color:"#54a0ff", icon:"📈", sub:histMonths.length+"mo tracked" },
-              { label:"Readiness Score",    value:readyScore+"%",         color:readyColor, icon:"✅", sub:readyLabel },
-            ].map(s => (
-              <div key={s.label} style={{ padding:"13px 14px", background:T.cardGrad, border:"1px solid "+s.color+"22", borderRadius:13 }}>
-                <div style={{ fontSize:17, marginBottom:5 }}>{s.icon}</div>
-                <div style={{ fontSize:16, fontWeight:800, color:s.color, fontFamily:MONO, lineHeight:1 }}>{s.value}</div>
-                <div style={{ fontSize:10, color:T.textSub, marginTop:4, fontFamily:BODY, fontWeight:600 }}>{s.label}</div>
-                <div style={{ fontSize:9, color:T.textMuted, marginTop:2, fontFamily:BODY }}>{s.sub}</div>
-              </div>
-            ))}
-          </div>
-
-          <div style={{ padding:"9px 14px", background:"#ffd32a08", border:"1px solid #ffd32a22", borderRadius:10 }}>
-            <span style={{ fontSize:11, color:"#ffd32a", fontFamily:BODY, lineHeight:1.6 }}>⚠️ Market data is for informational purposes only. Not financial advice. Consult a SEBI-registered advisor before investing.</span>
-          </div>
-        </div>
-      )}
-
-      {/* ======================================
-          INSTRUMENTS  -  grouped with simple/detail toggle
-      ====================================== */}
-      {activeSection === "instruments" && (
-        <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
-          <div style={{ fontSize:11, fontWeight:700, color:T.textSub, letterSpacing:"0.12em", textTransform:"uppercase", fontFamily:BODY }}>
-            📊 All Investment Options  -  Tap to expand details
-          </div>
-          {[
-            { cat:"Equity & Mutual Funds",          color:"#1dd1a1", icon:"📈", ids:["nifty50","nifty_next","elss","sensex"], desc:"Highest long-term returns. Best for 5+ year horizons." },
-            { cat:"Government & Retirement Schemes", color:"#00d2d3", icon:"🏛️", ids:["ppf","nps"],                           desc:"100% safe. Tax benefits. Ideal for conservative investors." },
-            { cat:"Gold",                            color:"#f0c040", icon:"🥇", ids:["sgb"],                                 desc:"Inflation hedge. 8-10 year horizon. Beats physical gold." },
-            { cat:"Fixed Income",                    color:"#a29bfe", icon:"🔒", ids:["fd"],                                  desc:"Guaranteed returns. Best for short-term and emergency parking." },
-          ].map(group => {
-            const groupInst = INVEST_INSTRUMENTS.filter(x => group.ids.includes(x.id));
-            return (
-              <div key={group.cat}>
-                <div style={{ display:"flex", gap:10, alignItems:"center", padding:"9px 14px", background:group.color+"10", border:"1px solid "+group.color+"33", borderRadius:12, marginBottom:8 }}>
-                  <span style={{ fontSize:18 }}>{group.icon}</span>
-                  <div>
-                    <div style={{ fontWeight:700, color:group.color, fontSize:13, fontFamily:TF }}>{group.cat}</div>
-                    <div style={{ fontSize:11, color:T.textSub, fontFamily:BODY }}>{group.desc}</div>
-                  </div>
-                </div>
-                {groupInst.map(inst => {
-                  const sugAmt = investable > 0
-                    ? Math.max(inst.minSIP||500, Math.round(investable * (
-                        inst.id==="nifty50"?0.25:inst.id==="nifty_next"?0.10:inst.id==="elss"?0.15:
-                        inst.id==="sensex"?0.10:inst.id==="ppf"?0.15:inst.id==="nps"?0.10:
-                        inst.id==="sgb"?0.10:0.05)))
-                    : (inst.minSIP||500);
-                  const p5  = sipProjection(sugAmt, 5,  inst.cagr);
-                  const p10 = sipProjection(sugAmt, 10, inst.cagr);
-                  const p15 = sipProjection(sugAmt, 15, inst.cagr);
-                  const expanded = selInst === inst.id;
-                  return (
-                    <div key={inst.id} onClick={() => setSelInst(expanded ? null : inst.id)}
-                      style={{ marginBottom:8, padding:"14px 18px", background:T.cardGrad, border:"1px solid "+(expanded?inst.color+"88":"#162234"), borderRadius:13, cursor:"pointer", transition:"all .2s" }}
-                      onMouseEnter={e=>{e.currentTarget.style.borderColor=inst.color+"55";}}
-                      onMouseLeave={e=>{e.currentTarget.style.borderColor=expanded?inst.color+"88":"#162234";}}>
-                      {/* Simple view - always visible */}
-                      <div style={{ display:"flex", gap:12, alignItems:"center" }}>
-                        <div style={{ width:42,height:42,borderRadius:11,background:inst.color+"22",border:"1px solid "+inst.color+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0 }}>{inst.icon}</div>
-                        <div style={{ flex:1 }}>
-                          <div style={{ display:"flex", justifyContent:"space-between", flexWrap:"wrap", gap:4 }}>
-                            <span style={{ fontWeight:700, color:T.text, fontSize:14, fontFamily:TF }}>{inst.name}</span>
-                            <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-                              <span style={{ fontSize:16, fontWeight:800, color:inst.color, fontFamily:MONO }}>{inst.cagr}%</span>
-                              <span style={{ fontSize:9, color:T.textMuted, fontFamily:BODY }}>CAGR</span>
-                            </div>
-                          </div>
-                          <div style={{ display:"flex", gap:5, marginTop:5, flexWrap:"wrap" }}>
-                            <span style={{ padding:"2px 7px", borderRadius:20, background:inst.color+"18", color:inst.color, fontSize:10, fontWeight:600, fontFamily:BODY }}>{inst.risk} Risk</span>
-                            <span style={{ padding:"2px 7px", borderRadius:20, background:"#162234", color:T.textSub, fontSize:10, fontFamily:BODY }}>⏱ {inst.horizon}</span>
-                            {inst.minSIP && <span style={{ padding:"2px 7px", borderRadius:20, background:"#162234", color:T.textSub, fontSize:10, fontFamily:BODY }}>Min {fmtINR(inst.minSIP)}/mo</span>}
-                          </div>
-                          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:6, flexWrap:"wrap", gap:6 }}>
-                            <span style={{ fontSize:11, color:T.textSub, fontFamily:BODY }}>{inst.highlight}</span>
-                            {investable > 0 && <span style={{ padding:"3px 10px", borderRadius:20, background:inst.color+"18", color:inst.color, fontSize:11, fontWeight:700, fontFamily:MONO }}>Invest {fmtINR(sugAmt)}/mo</span>}
-                          </div>
-                        </div>
-                        <span style={{ color:T.textMuted, fontSize:12, flexShrink:0 }}>{expanded?"▲":"▼"}</span>
-                      </div>
-                      {/* Expanded detail view */}
-                      {expanded && (
-                        <div style={{ marginTop:14, paddingTop:14, borderTop:"1px solid #162234", animation:"vFadeUp .2s ease" }}>
-                          <div style={{ fontSize:13, color:T.textSub, fontFamily:BODY, lineHeight:1.7, marginBottom:12 }}>{inst.why}</div>
-                          {inst.minSIP && (
-                            <div style={{ marginBottom:12 }}>
-                              <div style={{ fontSize:10, fontWeight:700, color:T.textSub, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:8, fontFamily:BODY }}>
-                                Growth of {fmtINR(sugAmt)}/month at {inst.cagr}% CAGR
-                              </div>
-                              <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:8 }}>
-                                {[[5,p5],[10,p10],[15,p15]].map(([yr,val]) => {
-                                  const inv  = sugAmt * yr * 12;
-                                  const gain = val - inv;
-                                  return (
-                                    <div key={yr} style={{ padding:"11px 8px", background:inst.color+"0e", border:"1px solid "+inst.color+"22", borderRadius:10, textAlign:"center" }}>
-                                      <div style={{ fontSize:9, color:T.textSub, fontFamily:BODY, marginBottom:3 }}>{yr} YEARS</div>
-                                      <div style={{ fontSize:15, fontWeight:800, color:inst.color, fontFamily:MONO }}>{fmtINR(val)}</div>
-                                      <div style={{ fontSize:9, color:T.textMuted, marginTop:3, fontFamily:BODY }}>Invested: {fmtINR(inv)}</div>
-                                      <div style={{ fontSize:10, color:"#1dd1a1", marginTop:1, fontFamily:BODY, fontWeight:600 }}>+{fmtINR(gain)}</div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          )}
-                          <div style={{ padding:"10px 14px", background:inst.color+"0a", border:"1px solid "+inst.color+"22", borderRadius:10 }}>
-                            <div style={{ fontSize:11, fontWeight:700, color:inst.color, marginBottom:4, fontFamily:BODY }}>🚀 How to Start</div>
-                            <div style={{ fontSize:12, color:T.textSub, fontFamily:BODY, lineHeight:1.6 }}>
-                              {["nifty50","nifty_next","elss","sensex"].includes(inst.id)
-                                ? "Open free account on Groww, Zerodha Coin, or Kuvera -> Search fund -> Start SIP -> Done in 15 min."
-                                : inst.id==="ppf" ? "Visit any SBI branch or use net banking -> Open PPF -> Deposit minimum ₹500/year."
-                                : inst.id==="nps" ? "Register at enps.nsdl.com -> Choose fund manager -> Set monthly auto-debit."
-                                : inst.id==="sgb" ? "Buy via bank / Zerodha / Groww during RBI issue windows (4-5 times/year)."
-                                : "Visit any bank branch or apply online -> Choose tenure (1-5 years)."}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* ======================================
-          COMPARE  -  side-by-side two instruments
-      ====================================== */}
-      {activeSection === "compare" && (
-        <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
-          <div style={{ fontSize:11, fontWeight:700, color:T.textSub, letterSpacing:"0.12em", textTransform:"uppercase", fontFamily:BODY }}>
-            ⚖️ Side-by-Side Comparison
-          </div>
-          {/* Selectors */}
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
-            {[[cmpA,setCmpA,"A"],[cmpB,setCmpB,"B"]].map(([val,setter,lbl]) => {
-              const inst = INVEST_INSTRUMENTS.find(x=>x.id===val);
-              return (
-                <div key={lbl}>
-                  <label style={{ fontSize:11, color:T.textSub, fontFamily:BODY, fontWeight:600, display:"block", marginBottom:6 }}>Option {lbl}</label>
-                  <select value={val} onChange={e=>setter(e.target.value)} style={{ ...IS2, width:"100%" }}>
-                    {INVEST_INSTRUMENTS.map(x => (
-                      <option key={x.id} value={x.id}>{x.name}</option>
-                    ))}
-                  </select>
-                  {inst && (
-                    <div style={{ marginTop:8, padding:"10px 12px", background:inst.color+"12", border:"1px solid "+inst.color+"33", borderRadius:10, display:"flex", gap:8, alignItems:"center" }}>
-                      <span style={{ fontSize:20 }}>{inst.icon}</span>
-                      <div>
-                        <div style={{ fontSize:12, fontWeight:700, color:inst.color, fontFamily:TF }}>{inst.name}</div>
-                        <div style={{ fontSize:10, color:T.textSub, fontFamily:BODY }}>{inst.cat}</div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-          {/* Comparison table */}
-          {instA && instB && (() => {
-            const rows = [
-              { label:"Historical CAGR",   a:instA.cagr+"%",               b:instB.cagr+"%",               better: instA.cagr >= instB.cagr ? "a" : "b" },
-              { label:"Risk Level",        a:instA.risk,                   b:instB.risk,                   better:"none" },
-              { label:"Investment Horizon",a:instA.horizon,                b:instB.horizon,                better:"none" },
-              { label:"Min SIP / Month",   a:instA.minSIP?fmtINR(instA.minSIP):"Lump sum",b:instB.minSIP?fmtINR(instB.minSIP):"Lump sum", better:(!instA.minSIP||!instB.minSIP)?"none":(instA.minSIP<=instB.minSIP?"a":"b") },
-              { label:"Tax Benefit",       a:["elss","ppf","nps"].includes(instA.id)?"Yes  -  80C":"No",     b:["elss","ppf","nps"].includes(instB.id)?"Yes  -  80C":"No",     better:"none" },
-              { label:"Category",          a:instA.cat,                    b:instB.cat,                    better:"none" },
-              { label:"Best For",          a:instA.highlight,              b:instB.highlight,              better:"none" },
-            ];
-            // 5-year projection at investable*0.3
-            const amt = Math.max(500, Math.round(investable*0.3));
-            const pA5 = sipProjection(amt,5,instA.cagr), pA10=sipProjection(amt,10,instA.cagr);
-            const pB5 = sipProjection(amt,5,instB.cagr), pB10=sipProjection(amt,10,instB.cagr);
-            return (
-              <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-                {/* Header row */}
-                <div style={{ display:"grid", gridTemplateColumns:"1.4fr 1fr 1fr", gap:8 }}>
-                  <div/>
-                  <div style={{ padding:"10px 12px", background:instA.color+"18", border:"1px solid "+instA.color+"44", borderRadius:10, textAlign:"center" }}>
-                    <span style={{ fontSize:18 }}>{instA.icon}</span>
-                    <div style={{ fontSize:11, fontWeight:700, color:instA.color, fontFamily:TF, marginTop:2 }}>{instA.name.split(" ").slice(0,3).join(" ")}</div>
-                  </div>
-                  <div style={{ padding:"10px 12px", background:instB.color+"18", border:"1px solid "+instB.color+"44", borderRadius:10, textAlign:"center" }}>
-                    <span style={{ fontSize:18 }}>{instB.icon}</span>
-                    <div style={{ fontSize:11, fontWeight:700, color:instB.color, fontFamily:TF, marginTop:2 }}>{instB.name.split(" ").slice(0,3).join(" ")}</div>
-                  </div>
-                </div>
-                {/* Data rows */}
-                {rows.map(row => (
-                  <div key={row.label} style={{ display:"grid", gridTemplateColumns:"1.4fr 1fr 1fr", gap:8, alignItems:"center" }}>
-                    <div style={{ fontSize:11, color:T.textSub, fontFamily:BODY }}>{row.label}</div>
-                    <div style={{ padding:"8px 10px", background:row.better==="a"?"#1dd1a118":T.surface2, border:"1px solid "+(row.better==="a"?"#1dd1a144":T.border2), borderRadius:9, textAlign:"center" }}>
-                      <span style={{ fontSize:12, fontWeight:row.better==="a"?700:400, color:row.better==="a"?instA.color:T.textSub, fontFamily:BODY }}>{row.a}</span>
-                      {row.better==="a" && <span style={{ fontSize:9, color:"#1dd1a1", display:"block", fontFamily:BODY }}>v Better</span>}
-                    </div>
-                    <div style={{ padding:"8px 10px", background:row.better==="b"?"#1dd1a118":T.surface2, border:"1px solid "+(row.better==="b"?"#1dd1a144":T.border2), borderRadius:9, textAlign:"center" }}>
-                      <span style={{ fontSize:12, fontWeight:row.better==="b"?700:400, color:row.better==="b"?instB.color:T.textSub, fontFamily:BODY }}>{row.b}</span>
-                      {row.better==="b" && <span style={{ fontSize:9, color:"#1dd1a1", display:"block", fontFamily:BODY }}>v Better</span>}
-                    </div>
-                  </div>
-                ))}
-                {/* Projection rows */}
-                <div style={{ padding:"14px 16px", background:"linear-gradient(135deg,#060f1c,#0a1628)", border:"1px solid #1a2e4a", borderRadius:12, marginTop:4 }}>
-                  <div style={{ fontSize:11, fontWeight:700, color:T.textSub, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:10, fontFamily:BODY }}>
-                    Projected wealth investing {fmtINR(amt)}/month
-                  </div>
-                  {[[5,pA5,pB5],[10,pA10,pB10]].map(([yr,va,vb]) => {
-                    const winnerColor = va>=vb?instA.color:instB.color;
-                    const maxVal = Math.max(va,vb);
-                    return (
-                      <div key={yr} style={{ marginBottom:yr===5?12:0 }}>
-                        <div style={{ fontSize:10, color:T.textSub, fontFamily:BODY, marginBottom:5 }}>After {yr} years</div>
-                        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
-                          {[[va,instA],[vb,instB]].map(([val,inst]) => (
-                            <div key={inst.id} style={{ padding:"10px 12px", background:val===Math.max(va,vb)?"linear-gradient(135deg,"+inst.color+"18,"+inst.color+"08)":T.surface2, border:"1px solid "+(val===maxVal?inst.color+"55":T.border2), borderRadius:10 }}>
-                              <div style={{ fontSize:14, fontWeight:800, color:inst.color, fontFamily:MONO }}>{fmtINR(val)}</div>
-                              <div style={{ fontSize:9, color:T.textMuted, marginTop:2, fontFamily:BODY }}>+{fmtINR(val-amt*yr*12)} gains</div>
-                              {val===maxVal && <div style={{ fontSize:9, color:"#1dd1a1", marginTop:2, fontFamily:BODY }}>🏆 Higher return</div>}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div style={{ padding:"8px 12px", background:"#ffd32a08", border:"1px solid #ffd32a22", borderRadius:9 }}>
-                  <span style={{ fontSize:11, color:"#ffd32a", fontFamily:BODY }}>⚠️ Historical CAGR does not guarantee future returns. Comparison is for educational purposes only.</span>
-                </div>
-              </div>
-            );
-          })()}
-        </div>
-      )}
-
-      {/* ======================================
-          GOAL PLANNER
-      ====================================== */}
-      {activeSection === "goalplanner" && (
-        <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
-          <div style={{ fontSize:11, fontWeight:700, color:T.textSub, letterSpacing:"0.12em", textTransform:"uppercase", fontFamily:BODY }}>
-            🎯 Investment Goal Planner
-          </div>
-          <div style={{ padding:"20px 22px", background:"linear-gradient(135deg,#060f1c,#0a1628)", border:"1px solid #1a2e4a", borderRadius:18 }}>
-            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))", gap:14, marginBottom:18 }}>
-              <div>
-                <label style={{ fontSize:12, color:T.textSub, fontWeight:600, display:"block", marginBottom:6, fontFamily:BODY }}>I want to accumulate (₹)</label>
-                <input type="number" value={gpTarget} onChange={e=>setGpTarget(e.target.value)} placeholder="e.g. 5000000 for 50 Lakhs" style={{ ...IS2, width:"100%" }}/>
-                <div style={{ display:"flex", gap:6, marginTop:6, flexWrap:"wrap" }}>
-                  {[[500000,"5L"],[1000000,"10L"],[2500000,"25L"],[5000000,"50L"],[10000000,"1Cr"]].map(([v,l]) => (
-                    <button key={l} onClick={()=>setGpTarget(String(v))} style={{ padding:"3px 9px", borderRadius:20, border:"1px solid #1dd1a133", background:gpTarget===String(v)?"#1dd1a122":"transparent", color:gpTarget===String(v)?"#1dd1a1":T.textSub, fontSize:10, cursor:"pointer", fontFamily:BODY }}>
-                      {l}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label style={{ fontSize:12, color:T.textSub, fontWeight:600, display:"block", marginBottom:6, fontFamily:BODY }}>Time horizon: {gpYears} years</label>
-                <input type="range" min={1} max={30} value={gpYears} onChange={e=>setGpYears(Number(e.target.value))} style={{ width:"100%", accentColor:"#1dd1a1", cursor:"pointer" }}/>
-                <div style={{ display:"flex", justifyContent:"space-between", marginTop:4 }}>
-                  <span style={{ fontSize:10, color:T.textMuted, fontFamily:BODY }}>1 yr</span>
-                  <span style={{ fontSize:10, color:"#1dd1a1", fontWeight:700, fontFamily:MONO }}>{gpYears} years</span>
-                  <span style={{ fontSize:10, color:T.textMuted, fontFamily:BODY }}>30 yrs</span>
-                </div>
-              </div>
-              <div>
-                <label style={{ fontSize:12, color:T.textSub, fontWeight:600, display:"block", marginBottom:6, fontFamily:BODY }}>Already saved (₹)  -  optional</label>
-                <input type="number" value={gpExist} onChange={e=>setGpExist(e.target.value)} placeholder="0" style={{ ...IS2, width:"100%" }}/>
-              </div>
-            </div>
-            <button onClick={computeGoalPlan}
-              style={{ width:"100%", padding:"13px", borderRadius:13, border:"none", background:"linear-gradient(135deg,#1dd1a1,#0abf8a)", color:"#02080f", fontWeight:700, fontSize:14, cursor:"pointer", fontFamily:BODY, boxShadow:"0 4px 18px #1dd1a133" }}>
-              📊 Calculate My Investment Plan
-            </button>
-          </div>
-          {/* Results */}
-          {gpResult && (
-            <div style={{ display:"flex", flexDirection:"column", gap:12, animation:"vFadeUp .3s ease" }}>
-              <div style={{ padding:"14px 18px", background:"linear-gradient(135deg,#071a10,#05120a)", border:"1px solid #1dd1a155", borderRadius:14 }}>
-                <div style={{ fontSize:13, color:T.textSub, fontFamily:BODY, lineHeight:1.7 }}>
-                  To reach <span style={{ color:"#1dd1a1", fontWeight:700, fontFamily:MONO }}>{fmtINR(gpResult.target)}</span> in <span style={{ color:"#ffd32a", fontWeight:700 }}>{gpResult.years} years</span>
-                  {gpResult.exist > 0 && <span>, with <span style={{ color:"#cd84f1", fontWeight:700, fontFamily:MONO }}>{fmtINR(gpResult.exist)}</span> already saved</span>},
-                  you need to invest <span style={{ color:"#ffd32a", fontWeight:700, fontFamily:MONO }}>{fmtINR(gpResult.stillNeeded)}</span> more.
-                </div>
-              </div>
-              <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))", gap:10 }}>
-                {gpResult.plans.map(plan => (
-                  <div key={plan.label} style={{ padding:"14px 16px", background:T.cardGrad, border:"1px solid "+(plan.feasible?"#1dd1a133":T.border), borderRadius:13 }}>
-                    <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:10 }}>
-                      <span style={{ fontSize:18 }}>{plan.icon}</span>
-                      <span style={{ fontSize:12, fontWeight:700, color:plan.color, fontFamily:TF }}>{plan.label}</span>
-                      {plan.feasible && investable > 0 && <span style={{ marginLeft:"auto", fontSize:9, color:"#1dd1a1", background:"#1dd1a118", padding:"2px 7px", borderRadius:20, fontFamily:BODY }}>v Achievable</span>}
-                    </div>
-                    <div style={{ fontSize:22, fontWeight:800, color:plan.color, fontFamily:MONO, lineHeight:1, marginBottom:4 }}>{fmtINR(plan.sipNeeded)}<span style={{ fontSize:11, fontWeight:400, color:T.textMuted }}>/month</span></div>
-                    <div style={{ fontSize:10, color:T.textSub, fontFamily:BODY, marginBottom:8 }}>
-                      Total invested: {fmtINR(plan.totalInvested)} . Interest gains: {fmtINR(plan.gains)}
-                    </div>
-                    {/* Progress bar showing SIP vs available */}
-                    {investable > 0 && (
-                      <div>
-                        <div style={{ height:5, background:"#162234", borderRadius:99, overflow:"hidden" }}>
-                          <div style={{ height:5, width:Math.min(100,(plan.sipNeeded/investable)*100)+"%", background:plan.color, borderRadius:99 }}/>
-                        </div>
-                        <div style={{ fontSize:9, color:T.textMuted, marginTop:3, fontFamily:BODY }}>
-                          {Math.round((plan.sipNeeded/investable)*100)}% of your {fmtINR(investable)} surplus
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-              <div style={{ padding:"10px 14px", background:"#54a0ff0a", border:"1px solid #54a0ff22", borderRadius:10 }}>
-                <span style={{ fontSize:12, color:"#54a0ff", fontFamily:BODY, lineHeight:1.6 }}>
-                  💡 Pro tip: Choose a plan where the monthly SIP fits comfortably within your surplus. Consistency matters more than the return rate  -  never stop a SIP mid-way through a market correction.
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ======================================
-          READINESS
-      ====================================== */}
-      {activeSection === "readiness" && (
-        <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
-          <div style={{ fontSize:11, fontWeight:700, color:T.textSub, letterSpacing:"0.12em", textTransform:"uppercase", fontFamily:BODY }}>✅ Investment Readiness Check</div>
-          {/* Score ring */}
-          <div style={{ padding:"20px 22px", background:"linear-gradient(135deg,#060f1c,#0a1628)", border:"1.5px solid "+readyColor+"55", borderRadius:18, position:"relative", overflow:"hidden" }}>
-            <div style={{ position:"absolute", top:-30, right:-30, width:160, height:160, borderRadius:"50%", background:readyColor+"0a", filter:"blur(40px)", pointerEvents:"none" }}/>
-            <div style={{ position:"relative", display:"flex", gap:20, alignItems:"center", flexWrap:"wrap" }}>
-              <div style={{ position:"relative", width:90, height:90, flexShrink:0 }}>
-                <svg viewBox="0 0 100 100" style={{ width:"100%", height:"100%", transform:"rotate(-90deg)" }}>
-                  <circle cx="50" cy="50" r="42" fill="none" stroke={T.border} strokeWidth="10"/>
-                  <circle cx="50" cy="50" r="42" fill="none" stroke={readyColor} strokeWidth="10"
-                    strokeDasharray={2*Math.PI*42} strokeDashoffset={2*Math.PI*42*(1-readyScore/100)}
-                    strokeLinecap="round" style={{ transition:"stroke-dashoffset 1s ease", filter:"drop-shadow(0 0 6px "+readyColor+"88)" }}/>
-                </svg>
-                <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center" }}>
-                  <span style={{ fontSize:20, fontWeight:800, color:readyColor, fontFamily:MONO }}>{readyScore}%</span>
-                </div>
-              </div>
-              <div style={{ flex:1 }}>
-                <div style={{ fontSize:18, fontWeight:800, color:readyColor, fontFamily:TF, marginBottom:4 }}>{readyLabel}</div>
-                <div style={{ fontSize:13, color:T.textSub, fontFamily:BODY, lineHeight:1.6 }}>
-                  {readyScore>=80?"You've ticked all the boxes. Start a Nifty 50 SIP today  -  even ₹500/month compounds into significant wealth.":readyScore>=50?"You're getting there. Fix the remaining items below and you'll be investment-ready.":"Build your financial foundation first. Investing before this is counterproductive."}
-                </div>
-              </div>
-            </div>
-          </div>
-          {/* Checklist */}
-          {readiness.map((item,i) => (
-            <div key={item.id} style={{ display:"flex", gap:12, padding:"13px 16px", background:T.cardGrad, border:"1px solid "+(item.done?"#1dd1a133":T.border), borderRadius:12, animation:"vFadeUp .3s "+(i*0.06)+"s both" }}>
-              <div style={{ width:30,height:30,borderRadius:"50%",background:item.done?"#1dd1a122":"#ff6b6b18",border:"1.5px solid "+(item.done?"#1dd1a1":"#ff6b6b44"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,flexShrink:0 }}>
-                {item.done?"✅":"❌"}
-              </div>
-              <div style={{ flex:1 }}>
-                <div style={{ fontWeight:700, color:item.done?T.text:T.textSub, fontSize:13, fontFamily:TF }}>{item.label}</div>
-                {!item.done && <div style={{ fontSize:11, color:"#ffa94d", fontFamily:BODY, marginTop:2 }}>-> {item.tip}</div>}
-              </div>
-            </div>
-          ))}
-          {/* Action plan */}
-          {readyScore >= 80 && (
-            <div style={{ padding:"14px 18px", background:"linear-gradient(135deg,#1dd1a112,#1dd1a106)", border:"1px solid #1dd1a133", borderRadius:13 }}>
-              <div style={{ fontSize:13, fontWeight:700, color:"#1dd1a1", fontFamily:TF, marginBottom:8 }}>🚀 Your 4-Step First Investment Action Plan</div>
-              {["Open a free Zerodha or Groww account (10 minutes, Aadhaar + PAN needed)",
-                "Complete KYC online  -  fully paperless now",
-                "Start a SIP in UTI Nifty 50 Index Fund with "+fmtINR(Math.max(500,Math.round(investable*0.5)))+"/month",
-                "Set up auto-debit on salary day so it runs automatically every month"
-              ].map((step,i) => (
-                <div key={i} style={{ display:"flex", gap:10, marginBottom:8, alignItems:"flex-start" }}>
-                  <div style={{ width:22,height:22,borderRadius:"50%",background:"#1dd1a122",border:"1px solid #1dd1a144",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"#1dd1a1",flexShrink:0,marginTop:1 }}>{i+1}</div>
-                  <span style={{ fontSize:13, color:T.textSub, fontFamily:BODY, lineHeight:1.6 }}>{step}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-    </div>
-  );
-}
+/* ─── AI ADVISOR ─────────────────────────────────────────────────────── */
 function AIAdvisor({ monthlyData, goals, loans, activeMonth, activeYear, theme, allCats, totalInc, totalExp, curMonth }) {
   const T   = THEMES[theme];
   const IS2 = iStyle(T);
+
   const [msgs,    setMsgs   ] = useState([]);
   const [input,   setInput  ] = useState("");
   const [loading, setLoading] = useState(false);
   const bottom = useRef(null);
   useEffect(() => { bottom.current?.scrollIntoView({ behavior:"smooth" }); }, [msgs]);
 
+  /* ── Compute financial context ── */
   const catBreak = allCats
     .map(c => ({ ...c, spent: curMonth.expenses.filter(e=>e.category===c.id).reduce((s,e)=>s+e.amount,0) }))
-    .filter(c => c.spent>0).sort((a,b)=>b.spent-a.spent);
+    .filter(c => c.spent > 0)
+    .sort((a,b) => b.spent - a.spent);
 
-  const totalEMI   = loans.reduce((s,l)=>{ const st=l.startYear*12+l.startMonth,cu=activeYear*12+activeMonth; return cu>=st&&cu<st+(l.tenureMonths||9999)?s+l.emi:s; },0);
-  const remaining  = totalInc-totalExp-totalEMI;
-  const savePct    = totalInc>0?Math.round(Math.max(0,remaining/totalInc*100)):0;
-  const spentPct   = totalInc>0?Math.round((totalExp/totalInc)*100):0;
+  const totalEMI = loans.reduce((s,l) => {
+    const st = l.startYear*12+l.startMonth, cu = activeYear*12+activeMonth;
+    return cu>=st && cu<st+(l.tenureMonths||9999) ? s+l.emi : s;
+  }, 0);
+
+  const remaining  = totalInc - totalExp - totalEMI;
+  const savePct    = totalInc > 0 ? Math.round(Math.max(0, remaining/totalInc*100)) : 0;
+  const spentPct   = totalInc > 0 ? Math.round((totalExp/totalInc)*100) : 0;
   const topCat     = catBreak[0];
-  const foodAmt    = catBreak.find(c=>c.id==="food")?.spent||0;
-  const subAmt     = catBreak.find(c=>c.id==="subscriptions")?.spent||0;
-  const shopAmt    = catBreak.find(c=>c.id==="shopping")?.spent||0;
-  const transAmt   = catBreak.find(c=>c.id==="transport")?.spent||0;
-  const entAmt     = catBreak.find(c=>c.id==="entertainment")?.spent||0;
-  const savingsAmt = catBreak.find(c=>c.id==="savings")?.spent||0;
-  const hasData    = totalInc>0||totalExp>0;
-  const month      = MONTHS[activeMonth];
-  const prevKey    = activeMonth===0?(activeYear-1)+"-11":activeYear+"-"+(activeMonth-1);
-  const prevData   = monthlyData[prevKey];
-  const prevExp    = prevData?prevData.expenses.reduce((s,e)=>s+e.amount,0):0;
-  const momDelta   = prevExp>0?Math.round(((totalExp-prevExp)/prevExp)*100):null;
-  const pendingGoals   = goals.filter(g=>g.saved<g.target);
-  const completedGoals = goals.filter(g=>g.saved>=g.target);
-  const nearDeadline   = goals.filter(g=>{ if(!g.deadline)return false; const d=Math.ceil((new Date(g.deadline)-new Date())/864e5); return d>0&&d<=90; });
-  const emergencyGoal  = goals.find(g=>g.label.toLowerCase().includes("emergency"));
-  const emiPct         = totalInc>0?Math.round((totalEMI/totalInc)*100):0;
+  const foodAmt    = catBreak.find(c=>c.id==="food")?.spent || 0;
+  const subAmt     = catBreak.find(c=>c.id==="subscriptions")?.spent || 0;
+  const shopAmt    = catBreak.find(c=>c.id==="shopping")?.spent || 0;
+  const transAmt   = catBreak.find(c=>c.id==="transport")?.spent || 0;
+  const savingsAmt = catBreak.find(c=>c.id==="savings")?.spent || 0;
+  const hasData    = totalInc > 0 || totalExp > 0;
 
-  /* --- nl: joins array of strings with newline --- */
-  function nl(arr) { return arr.join("\n"); }
+  /* Month-over-month */
+  const prevKey  = activeMonth===0 ? (activeYear-1)+"-11" : activeYear+"-"+(activeMonth-1);
+  const prevData = monthlyData[prevKey];
+  const prevExp  = prevData ? prevData.expenses.reduce((s,e)=>s+e.amount,0) : 0;
+  const momDelta = prevExp>0 ? Math.round(((totalExp-prevExp)/prevExp)*100) : null;
 
-  /* --- INTENT DETECTION --- */
-  function detectIntent(q) {
-    const t = q.toLowerCase().replace(/[?!.,]/g,"").trim();
-    const map = {
-      savings:      [/sav(e|ing|ings)/,/save more/,/saving habit/,/paisa bachao/,/set aside/,/corpus/,/accumulate/],
-      spending:     [/overspend/,/where.*money/,/where.*go/,/where.*spend/,/money.*going/,/biggest.*expense/,/top.*spend/,/kahan.*paisa/,/expense.*break/],
-      budget:       [/budget/,/allocat/,/50.30.20/,/limit.*spend/,/spend.*limit/,/financial plan/,/monthly plan/],
-      emergency:    [/emergency/,/safety net/,/rainy day/,/cushion/,/crisis fund/,/contingency/],
-      food:         [/food/,/dining/,/eating/,/restaurant/,/swiggy/,/zomato/,/cooking/,/grocery/,/groceries/,/meal/],
-      loans:        [/loan/,/emi/,/debt/,/borrow/,/repay/,/credit/,/home loan/,/car loan/,/personal loan/,/karz/],
-      goals:        [/goal/,/target/,/dream/,/achieve/,/milestone/,/saving for/,/vacation/,/holiday/,/trip/],
-      health:       [/health/,/score/,/performance/,/how.*doing/,/overall/,/summary/,/report/,/on track/],
-      invest:       [/invest/,/sip/,/mutual fund/,/stock/,/equity/,/nifty/,/sensex/,/portfolio/,/grow.*money/,/wealth/,/ppf/,/elss/,/nps/,/where.*put/,/where.*invest/,/best investment/],
-      tax:          [/tax/,/80c/,/80d/,/hra/,/income tax/,/itr/,/deduction/,/tds/,/tax slab/,/new regime/,/old regime/,/section 80/],
-      subscriptions:[/subscription/,/netflix/,/ott/,/spotify/,/amazon prime/,/hotstar/,/streaming/,/cancel.*sub/],
-      income:       [/income/,/salary/,/earning/,/revenue/,/source.*income/,/hike/,/passive income/,/side income/],
-      transport:    [/transport/,/travel/,/commut/,/cab/,/ola/,/uber/,/petrol/,/fuel/,/metro/],
-      shopping:     [/shopping/,/clothes/,/fashion/,/buy.*online/,/amazon/,/flipkart/,/impulse/],
-      terms:        [/what is/,/what.*mean/,/explain/,/define/,/tell me about/,/\bsip\b/,/\bcagr\b/,/\belss\b/,/\bppf\b/,/\bnps\b/,/\bfd\b/,/cibil/,/credit score/,/inflation/,/compound/,/nav\b/,/xirr/,/net worth/,/liquid fund/,/ulip/],
-      motivation:   [/motivat/,/inspire/,/encourage/,/feel.*bad/,/stressed/,/worried/,/anxious/,/depress/,/overwhelm/,/broke/,/struggling/],
-      tips:         [/tip/,/trick/,/advice/,/suggest/,/best.*practice/,/habit/,/discipline/,/improve.*financ/],
-      greeting:     [/^hi$/, /^hello$/, /^hey$/, /^namaste/, /good morning/, /good evening/, /how are you/],
-      networth:     [/net worth/,/total.*asset/,/how.*rich/,/total.*wealth/],
-      insurance:    [/insurance/,/term.*plan/,/life.*cover/,/health.*insurance/,/premium/,/policy/],
-      realestate:   [/real estate/,/property/,/buy.*house/,/flat/,/apartment/,/rent.*buy/],
-      creditScore:  [/credit score/,/cibil score/,/improve.*credit/,/credit.*report/],
-    };
-    const scores = {};
-    for (const [intent, patterns] of Object.entries(map)) {
-      scores[intent] = patterns.filter(p => p.test(t)).length;
-    }
-    const best = Object.entries(scores).sort((a,b)=>b[1]-a[1])[0];
-    return best[1]>0 ? best[0] : "unknown";
-  }
+  /* Goals */
+  const pendingGoals  = goals.filter(g=>g.saved<g.target);
+  const completedGoals= goals.filter(g=>g.saved>=g.target);
+  const nearDeadline  = goals.filter(g=>{
+    if(!g.deadline) return false;
+    const d = Math.ceil((new Date(g.deadline)-new Date())/(864e5));
+    return d>0 && d<=90;
+  });
+  const emergencyGoal = goals.find(g=>g.label.toLowerCase().includes("emergency"));
 
-  /* --- RESPONSE GENERATORS --- */
-  function respond(intent, question) {
-    const noData = "No data yet for " + month + ". Add your income and expenses in the Dashboard first  -  then I will give you advice specific to your numbers!";
+  /* ════════════════════════════════════════
+     RULE ENGINE
+  ════════════════════════════════════════ */
+  function analyse(question) {
+    const q = question.toLowerCase().trim();
+    const month = MONTHS[activeMonth];
 
-    if (intent === "greeting") {
-      if (!hasData) return noData;
-      const status = savePct>=20 ? "You are doing great this month!" : savePct>=10 ? "You are on the right track, some room to improve." : "A few things we should work on together.";
-      return nl([
-        "Namaste! Here is your " + month + " snapshot:",
-        "Income: " + fmtINR(totalInc) + "  |  Spent: " + fmtINR(totalExp) + " (" + spentPct + "%)" + "  |  Remaining: " + fmtINR(remaining),
-        "Savings Rate: " + savePct + "%",
-        "",
-        status,
-        "",
-        "What would you like to discuss? I can help with savings, investments, tax planning, goals, loans, or anything else."
-      ]);
+    /* ── NO DATA ── */
+    if (!hasData) {
+      return "📊 No data yet for " + month + "!\n\nTo get personalised advice:\n1. Go to Dashboard\n2. Tap + Add Income\n3. Add your expenses\n4. Come back and ask me anything!\n\nI can help with saving tips, budget planning, goal tracking, loan analysis and more — all based on your real numbers.";
     }
 
-    if (intent === "savings") {
-      if (!hasData) return noData;
+    /* ── SAVINGS ── */
+    if (/sav(e|ing|ings)|how much (can|should) i save|increase saving/.test(q)) {
       const needed = Math.max(0, totalInc*0.20 - savingsAmt);
-      const ideal  = Math.round(totalInc*0.20);
-      const parts  = [];
-      parts.push("Savings Analysis  -  " + month);
-      parts.push("");
-      if (savePct>=20) {
-        parts.push("Excellent! You are saving " + savePct + "%  -  above the 20% target.");
-      } else if (savePct>=10) {
-        parts.push("You are saving " + savePct + "%. Target is 20%. You need " + fmtINR(Math.round(needed)) + " more this month.");
+      const lines = ["💰 Savings Analysis — " + month + "\n"];
+      if (savePct >= 20) {
+        lines.push("🌟 Excellent! You're saving " + savePct + "% of income — above the 20% target!");
+      } else if (savePct >= 10) {
+        lines.push("🟡 You're saving " + savePct + "% — getting there. You need " + fmtINR(Math.round(needed)) + " more to hit 20%.");
       } else {
-        parts.push("You are saving only " + savePct + "%. The target is 20% (" + fmtINR(ideal) + "/month). This is the single most important thing to fix.");
+        lines.push("🔴 You're saving only " + savePct + "% — well below the 20% target.");
+        lines.push("Gap to reach 20%: " + fmtINR(Math.round(needed)));
       }
-      parts.push("");
-      parts.push("How to save more:");
-      parts.push("1. Pay yourself first  -  transfer " + fmtINR(ideal) + " to savings on salary day before spending");
-      parts.push("2. Automate it  -  standing instruction so it happens without effort");
-      if (foodAmt > totalInc*0.20) parts.push("3. Cut food spending 20%  -  saves " + fmtINR(Math.round(foodAmt*0.2)) + "/month");
-      if (subAmt > 0) parts.push("4. Cancel unused subscriptions  -  " + fmtINR(subAmt) + "/month freed up");
-      if (shopAmt > totalInc*0.15) parts.push("5. Apply the 24-hour rule before purchases above Rs 500");
-      parts.push("");
-      parts.push("Once you save 20% consistently, the next step is investing. Ask me 'Where should I invest?' for the full guide!");
-      return nl(parts);
+      lines.push("\nTop ways to save more:");
+      if (foodAmt > totalInc*0.20) lines.push("• Cut food spending by 20% → save " + fmtINR(Math.round(foodAmt*0.2)) + "/month");
+      if (subAmt > 0) lines.push("• Cancel unused subscriptions → " + fmtINR(subAmt) + "/month freed up");
+      if (shopAmt > totalInc*0.15) lines.push("• Reduce shopping by 25% → save " + fmtINR(Math.round(shopAmt*0.25)));
+      lines.push("• Pay yourself first — transfer savings on salary day before spending");
+      lines.push("\n💡 Use the Goals tab to track your savings targets automatically.");
+      return lines.join("\n");
     }
 
-    if (intent === "spending") {
-      if (!hasData) return noData;
-      const parts = [];
-      parts.push("Spending Breakdown  -  " + month);
-      parts.push("");
-      parts.push("Income:   " + fmtINR(totalInc));
-      parts.push("Spent:    " + fmtINR(totalExp) + " (" + spentPct + "% of income)");
-      parts.push("Left:     " + fmtINR(remaining));
-      parts.push("");
-      catBreak.slice(0,6).forEach((c,idx) => {
+    /* ── OVERSPENDING / WHERE IS MONEY GOING ── */
+    if (/overspend|where.*money|where.*spend|spend.*most|biggest expense|top expense/.test(q)) {
+      const lines = ["📊 Spending Breakdown — " + month + "\n"];
+      lines.push("Income: " + fmtINR(totalInc) + " | Spent: " + fmtINR(totalExp) + " (" + spentPct + "%) | Left: " + fmtINR(remaining) + "\n");
+      catBreak.slice(0,6).forEach((c,i) => {
         const pct = totalInc>0 ? Math.round((c.spent/totalInc)*100) : 0;
-        const bar = "=".repeat(Math.min(10,Math.round(pct/3))) + "-".repeat(Math.max(0,10-Math.round(pct/3)));
-        parts.push(c.icon + " " + c.label + ": " + fmtINR(c.spent) + " (" + pct + "%)");
-        parts.push("  [" + bar + "]");
+        const bar = "█".repeat(Math.min(10,Math.round(pct/3))) + "░".repeat(Math.max(0,10-Math.round(pct/3)));
+        lines.push((i===0?"🔴 ":"   ") + c.icon+" "+c.label+": "+fmtINR(c.spent)+" ("+pct+"%)\n   "+bar);
       });
       if (topCat) {
-        const pct = totalInc>0 ? Math.round((topCat.spent/totalInc)*100) : 0;
-        parts.push("");
-        parts.push((pct>30?"Warning: ":"") + topCat.label + " is your biggest expense at " + fmtINR(topCat.spent) + " (" + pct + "%). " + (pct>30?"Consider setting a budget limit.":"Looks manageable."));
+        lines.push("\n" + (topCat.spent>totalInc*0.35?"⚠️ ":"✅ ") + topCat.label + " is your biggest expense" + (topCat.spent>totalInc*0.35?" — consider a budget limit for it.":". Looks manageable."));
       }
       if (momDelta!==null) {
-        parts.push("");
-        parts.push("vs Last Month: " + (momDelta>0 ? "Spent " + momDelta + "% MORE (+" + fmtINR(totalExp-prevExp) + ")" : "Spent " + Math.abs(momDelta) + "% LESS (-" + fmtINR(prevExp-totalExp) + ")"));
+        lines.push("\n" + (momDelta>0?"📈":"📉") + " Spending is " + Math.abs(momDelta) + "% " + (momDelta>0?"higher":"lower") + " than last month (" + fmtINR(prevExp) + " → " + fmtINR(totalExp) + ").");
       }
-      return nl(parts);
+      return lines.join("\n");
     }
 
-    if (intent === "budget") {
-      if (!hasData) return noData;
-      const parts = [];
-      parts.push("Budget Plan  -  " + fmtINR(totalInc) + " income (" + month + ")");
-      parts.push("");
-      parts.push("50/30/20 Rule:");
-      parts.push("Needs  (50%) = " + fmtINR(Math.round(totalInc*0.50)) + "  (rent, food, transport)");
-      parts.push("Wants  (30%) = " + fmtINR(Math.round(totalInc*0.30)) + "  (shopping, dining, fun)");
-      parts.push("Saving (20%) = " + fmtINR(Math.round(totalInc*0.20)) + "  (goals, investments)");
-      parts.push("");
-      parts.push("Category limits I recommend:");
-      parts.push("Food & Dining:  " + fmtINR(Math.round(totalInc*0.15)) + " (15%)" + (foodAmt>0 ? "   -  you spent " + fmtINR(foodAmt) + (foodAmt>totalInc*0.15?"  -  over!" :"  -  ok!") : ""));
-      parts.push("Transport:      " + fmtINR(Math.round(totalInc*0.10)) + " (10%)" + (transAmt>0 ? "   -  you spent " + fmtINR(transAmt) + (transAmt>totalInc*0.10?"  -  over!" :"  -  ok!") : ""));
-      parts.push("Shopping:       " + fmtINR(Math.round(totalInc*0.10)) + " (10%)" + (shopAmt>0 ? "   -  you spent " + fmtINR(shopAmt) + (shopAmt>totalInc*0.10?"  -  over!" :"  -  ok!") : ""));
-      parts.push("Entertainment:  " + fmtINR(Math.round(totalInc*0.05)) + " (5%)" + (entAmt>0 ? "   -  you spent " + fmtINR(entAmt) + (entAmt>totalInc*0.05?"  -  over!" :"  -  ok!") : ""));
-      parts.push("Subscriptions:  " + fmtINR(Math.round(totalInc*0.05)) + " (5%)" + (subAmt>0 ? "   -  you spent " + fmtINR(subAmt) + (subAmt>totalInc*0.05?"  -  over!" :"  -  ok!") : ""));
-      parts.push("");
-      parts.push("Tip: Click the Budgets button in the Dashboard to set these limits. I will warn you at 90%.");
-      return nl(parts);
+    /* ── BUDGET ── */
+    if (/budget|limit|allocat|50.30.20|rule/.test(q)) {
+      const lines = ["📐 Budget Recommendations — Based on " + fmtINR(totalInc) + " income\n"];
+      lines.push("Using the 50/30/20 rule:\n");
+      const recs = [
+        ["Needs (Rent+Food+Transport)", Math.round(totalInc*0.50), "🏠"],
+        ["Wants (Shopping+Entertainment)", Math.round(totalInc*0.30), "🛍️"],
+        ["Savings+Investments", Math.round(totalInc*0.20), "💰"],
+      ];
+      recs.forEach(([l,v,i]) => lines.push(i+" "+l+": "+fmtINR(v)));
+      lines.push("\nCategory-specific suggestions:");
+      if (foodAmt>0)  lines.push("🍜 Food: Budget "+fmtINR(Math.round(totalInc*0.15))+" (15%). Current: "+fmtINR(foodAmt));
+      if (transAmt>0) lines.push("🚗 Transport: Budget "+fmtINR(Math.round(totalInc*0.10))+" (10%). Current: "+fmtINR(transAmt));
+      if (subAmt>0)   lines.push("🔄 Subscriptions: Budget "+fmtINR(Math.round(totalInc*0.05))+" (5%). Current: "+fmtINR(subAmt));
+      if (shopAmt>0)  lines.push("🛍️ Shopping: Budget "+fmtINR(Math.round(totalInc*0.10))+" (10%). Current: "+fmtINR(shopAmt));
+      lines.push("\n💡 Click ⚙ Budgets in the Dashboard to set limits. Vatsu alerts you at 90%.");
+      return lines.join("\n");
     }
 
-    if (intent === "emergency") {
+    /* ── EMERGENCY FUND ── */
+    if (/emergency|fund|crisis|rainy day|cushion/.test(q)) {
       const target  = totalExp>0 ? totalExp*6 : 300000;
       const current = emergencyGoal ? emergencyGoal.saved : 0;
       const pct     = target>0 ? Math.round((current/target)*100) : 0;
-      const monthly = totalExp>0 ? Math.round(totalExp*0.10) : 5000;
+      const monthly = Math.round(totalExp*0.10);
       const months  = current<target ? Math.ceil((target-current)/Math.max(monthly,1)) : 0;
-      const parts   = [];
-      parts.push("Emergency Fund Guide");
-      parts.push("");
-      parts.push("This is the most important financial safety net. Without it, one emergency can destroy years of progress.");
-      parts.push("");
-      parts.push("Your ideal target: " + fmtINR(Math.round(target)) + " (6x your monthly expenses)");
+      const lines   = ["🛡️ Emergency Fund Analysis\n"];
+      lines.push("Ideal target (6× monthly expenses): " + fmtINR(Math.round(target)));
       if (emergencyGoal) {
-        const bar = "#".repeat(Math.round(pct/10)) + ".".repeat(10-Math.round(pct/10));
-        parts.push("Your progress:  " + fmtINR(current) + " [" + bar + "] " + pct + "%");
-        if (current>=target) {
-          parts.push("You are fully covered! Major milestone achieved.");
-        } else {
-          parts.push("Still needed: " + fmtINR(Math.round(target-current)));
-          parts.push("At " + fmtINR(monthly) + "/month you will be done in " + months + " months.");
-        }
+        lines.push("Your progress: " + fmtINR(current) + " (" + pct + "%)");
+        const barLen = Math.round(pct/10);
+        lines.push("["+"█".repeat(barLen)+"░".repeat(10-barLen)+"] "+pct+"%");
       } else {
-        parts.push("No emergency fund goal found. Create one in the Goals tab with target " + fmtINR(Math.round(target)) + ".");
+        lines.push("❌ No emergency fund goal found in Goals tab.");
       }
-      parts.push("");
-      parts.push("Where to keep it:");
-      parts.push("- Liquid mutual fund (best: 6-7% return, withdraw in 1 day)");
-      parts.push("- High-yield savings account (4-6% return)");
-      parts.push("- NOT in stocks or long-term FDs  -  you need instant access");
-      return nl(parts);
+      if (current >= target) {
+        lines.push("\n✅ Fully funded! You're protected against 6 months of expenses.");
+      } else {
+        lines.push("\nStill needed: " + fmtINR(Math.round(target-current)));
+        lines.push("At " + fmtINR(monthly) + "/month (10% of expenses) → funded in " + months + " months");
+        lines.push("\n💡 Create a goal named 'Emergency Fund' with target " + fmtINR(Math.round(target)) + " in the Goals tab.");
+      }
+      return lines.join("\n");
     }
 
-    if (intent === "food") {
-      if (foodAmt===0) return "No food expenses in " + month + " yet. Add them in the Dashboard to get analysis. Tip: Tracking alone reduces spending by 10-15% because awareness changes behaviour.";
+    /* ── FOOD ── */
+    if (/food|dining|eat|restaurant|swiggy|zomato|cook/.test(q)) {
+      if (foodAmt===0) return "No food expenses in " + month + " yet. Add them in the Dashboard to get a food spending analysis!";
       const ideal = Math.round(totalInc*0.15);
-      const over  = foodAmt-ideal;
-      const parts = [];
-      parts.push("Food Spending  -  " + month);
-      parts.push("");
-      parts.push("You spent:    " + fmtINR(foodAmt));
-      parts.push("Ideal (15%):  " + fmtINR(ideal));
-      parts.push(over>0 ? "Over by:      " + fmtINR(over) + "   -  action needed!" : "Status:       Within target  -  good job!");
-      parts.push("");
-      parts.push("Tips to cut food costs:");
-      parts.push("- Meal prep on Sunday: saves Rs 2,000-4,000/month");
-      parts.push("- Swiggy/Zomato maximum 2x per week");
-      parts.push("- Carry lunch to work 4 days a week");
-      parts.push("- Buy groceries weekly in bulk, not daily");
-      parts.push("- Cook breakfast at home: saves Rs 1,500-2,500/month");
-      if (over>0) {
-        parts.push("");
-        parts.push("If you cut food by 20%, you save " + fmtINR(Math.round(foodAmt*0.2)) + "/month = " + fmtINR(Math.round(foodAmt*0.2*12)) + "/year!");
+      const over  = foodAmt - ideal;
+      const lines = ["🍜 Food & Dining — " + month + "\n"];
+      lines.push("Spent: " + fmtINR(foodAmt) + " | Ideal (15%): " + fmtINR(ideal));
+      lines.push(over>0 ? "Over by: " + fmtINR(over) + " ⚠️" : "✅ Within ideal range!");
+      if (over > 0) {
+        lines.push("\nWays to cut food costs:");
+        lines.push("• Meal prep on Sunday — saves ₹2,000–₹4,000/month");
+        lines.push("• Use food apps only on weekends");
+        lines.push("• Cook breakfast and lunch at home");
+        lines.push("• Buy groceries weekly, not daily");
+        lines.push("\n💡 Try the 'No Eating Out Week' challenge — it could save you " + fmtINR(Math.round(foodAmt*0.4)) + " this month!");
       }
-      parts.push("");
-      parts.push("Try the No Eating Out Week challenge in the Challenges tab!");
-      return nl(parts);
+      return lines.join("\n");
     }
 
-    if (intent === "loans") {
-      if (loans.length===0) return "No loans recorded. Add them in the Loans tab to track EMIs. Rule: Total EMIs should be below 30-35% of income. Above that you are financially stressed.";
-      const parts = [];
-      parts.push("Loan Analysis");
-      parts.push("");
-      parts.push("Active loans: " + loans.length);
-      parts.push("Total EMI:    " + fmtINR(totalEMI) + " (" + emiPct + "% of income)");
-      parts.push("EMI health:   " + (emiPct<=30 ? "Healthy  -  under 30%" : emiPct<=40 ? "High  -  30-40%, watch this" : "Very High  -  above 40%, action needed!"));
-      parts.push("");
-      parts.push("Your loans:");
-      loans.forEach(l => parts.push("- " + l.bankName + " " + l.loanType + ": " + fmtINR(l.emi) + "/month" + (l.interestRate ? " at " + l.interestRate + "%" : "")));
-      parts.push("");
-      parts.push("Smart repayment (Avalanche Method):");
-      parts.push("Prepay highest-interest loan first:");
-      parts.push("Personal Loan (12-24%) > Gold Loan (10-15%) > Car Loan (8-12%) > Home Loan (8-10%)");
-      if (emiPct>35) {
-        parts.push("");
-        parts.push("Since your EMI burden is high:");
-        parts.push("1. No new loans until one is fully closed");
-        parts.push("2. Any surplus goes to prepay highest-interest loan");
-        parts.push("3. Avoid credit card debt  -  it charges 36-42% annual interest!");
+    /* ── LOANS / EMI ── */
+    if (/loan|emi|debt|borrow|repay|bank/.test(q)) {
+      if (loans.length===0) return "No loans recorded yet. Add them in the 🏦 Loans tab to track EMIs and see their impact on your monthly balance.";
+      const emiPct = totalInc>0 ? Math.round((totalEMI/totalInc)*100) : 0;
+      const status = emiPct<=30 ? "✅ Healthy (under 30%)" : emiPct<=40 ? "⚠️ High (30-40%)" : "🔴 Very High (above 40%)";
+      const lines  = ["🏦 Loan Analysis\n"];
+      lines.push("Active loans: " + loans.length);
+      lines.push("Total monthly EMI: " + fmtINR(totalEMI) + " (" + emiPct + "% of income)");
+      lines.push("EMI burden: " + status);
+      lines.push("\nLoan breakdown:");
+      loans.forEach(l => lines.push("• " + l.bankName + " " + l.loanType + ": " + fmtINR(l.emi) + "/month"));
+      if (emiPct>30) {
+        lines.push("\n💡 Priority order for prepayment: Personal Loan > Gold Loan > Car Loan > Home Loan");
+        lines.push("Even ₹5,000 extra/month on a personal loan significantly reduces total interest.");
+      } else {
+        lines.push("\n✅ Your EMI burden is manageable. Pay on time to maintain a good credit score.");
       }
-      return nl(parts);
+      return lines.join("\n");
     }
 
-    if (intent === "goals") {
-      if (goals.length===0) return "No savings goals set. Go to the Goals tab and create goals like Emergency Fund, Vacation, Gadget, Car, or House Down Payment. Every contribution is tracked and deducted from your monthly balance automatically.";
-      const parts = [];
-      parts.push("Goals Summary");
-      parts.push("");
-      parts.push("Total: " + goals.length + "  |  Done: " + completedGoals.length + "  |  In Progress: " + pendingGoals.length);
-      parts.push("");
+    /* ── GOALS ── */
+    if (/goal|target|dream|achieve|milestone|saving for/.test(q)) {
+      if (goals.length===0) return "No savings goals yet! Go to the 🎯 Goals tab and add goals like:\n• Emergency Fund\n• Vacation\n• New phone or laptop\n• Down payment\n\nEvery contribution is tracked automatically and deducted from your monthly balance.";
+      const lines = ["🎯 Your Goals Summary\n"];
+      lines.push("Total: " + goals.length + " | Completed: " + completedGoals.length + " | In Progress: " + pendingGoals.length + "\n");
       goals.forEach(g => {
         const pct  = Math.min(100,Math.round((g.saved/g.target)*100));
-        const bar  = "#".repeat(Math.round(pct/10)) + ".".repeat(10-Math.round(pct/10));
+        const bar  = "█".repeat(Math.round(pct/10))+"░".repeat(10-Math.round(pct/10));
         const done = g.saved>=g.target;
-        parts.push((done?"DONE: ":"Goal: ") + g.label);
-        parts.push("  " + fmtINR(g.saved) + " / " + fmtINR(g.target) + "  [" + bar + "]  " + pct + "%");
+        lines.push((done?"✅ ":"🎯 ") + g.label);
+        lines.push("   " + fmtINR(g.saved) + " / " + fmtINR(g.target) + " ["+bar+"] "+pct+"%");
         if (g.deadline && !done) {
           const days = Math.ceil((new Date(g.deadline)-new Date())/864e5);
-          const req  = days>0 ? Math.ceil((g.target-g.saved)/(days/30)) : 0;
-          parts.push("  " + (days<0 ? "Deadline passed!" : days<=30 ? "Due in " + days + " days  -  need " + fmtINR(req) + "/month" : Math.ceil(days/30) + " months left  -  need " + fmtINR(req) + "/month"));
+          lines.push("   " + (days<0?"⏰ Overdue!":days<=30?"⚠️ Due in "+days+" days":"📅 "+days+" days left"));
         }
       });
-      if (nearDeadline.length>0) {
-        parts.push("");
-        parts.push("Urgent: " + nearDeadline.map(g=>g.label).join(", ") + " due within 90 days!");
-      }
-      parts.push("");
-      parts.push("Use the Contribute button on each goal  -  it records the amount as a savings expense automatically.");
-      return nl(parts);
+      if (nearDeadline.length>0) lines.push("\n⚡ Urgent: " + nearDeadline.map(g=>g.label).join(", ") + " due within 90 days!");
+      lines.push("\n💡 Use the Contribute button on each goal to add money — it automatically records as an expense.");
+      return lines.join("\n");
     }
 
-    if (intent === "health") {
-      if (!hasData) return noData;
-      const score = Math.max(0,Math.min(100,(savePct>=20?35:savePct>=10?20:5)+(emiPct<=30?25:emiPct<=40?15:5)+(goals.length>0?completedGoals.length>0?20:12:0)+(topCat&&topCat.spent<totalInc*0.35?20:10)));
-      const grade = score>=80?"A+":score>=70?"A":score>=60?"B+":score>=50?"B":score>=40?"C":"D";
-      const parts = [];
-      parts.push("Financial Health Report  -  " + month);
-      parts.push("");
-      parts.push("Grade: " + grade + "  (" + score + "/100)");
-      parts.push("Income: " + fmtINR(totalInc) + "  |  Expenses: " + fmtINR(totalExp) + "  |  Remaining: " + fmtINR(remaining));
-      parts.push("Savings Rate: " + savePct + "% " + (savePct>=20 ? " -  Excellent!" : savePct>=10 ? " -  Can improve" : " -  Needs attention"));
-      parts.push("EMI Burden:   " + emiPct + "% " + (emiPct<=30 ? " -  Healthy" : emiPct<=40 ? " -  High" : " -  Very High!"));
-      if (momDelta!==null) parts.push("vs Last Month: " + (momDelta>0 ? "Spent " + momDelta + "% more" : "Spent " + Math.abs(momDelta) + "% less  -  well done!"));
-      const actions = [];
-      if (savePct<20) actions.push("Increase savings to " + fmtINR(Math.round(totalInc*0.20)) + "/month (now: " + fmtINR(savingsAmt) + ")");
-      if (emiPct>35) actions.push("EMI burden is high  -  prepay highest-interest loan first");
-      if (!emergencyGoal) actions.push("Create Emergency Fund goal (target: " + fmtINR(Math.round(totalExp*6)) + ")");
-      if (topCat && topCat.spent>totalInc*0.35) actions.push("Set a budget for " + topCat.label + " in the Dashboard");
-      if (actions.length>0) {
-        parts.push("");
-        parts.push("Top improvements:");
-        actions.forEach((a,i) => parts.push((i+1) + ". " + a));
+    /* ── HEALTH / SCORE ── */
+    if (/health|score|performance|doing|overall|summary|report/.test(q)) {
+      const grade  = savePct>=20?"A":savePct>=15?"B+":savePct>=10?"B":"C";
+      const issues = [];
+      if (savePct<10)              issues.push("📈 Boost savings rate from "+savePct+"% to at least 20%");
+      if (totalEMI>totalInc*0.35)  issues.push("🏦 EMI burden is "+Math.round(totalEMI/totalInc*100)+"% — try to keep under 30%");
+      if (topCat&&topCat.spent>totalInc*0.35) issues.push("💸 "+topCat.label+" ("+fmtINR(topCat.spent)+") needs a budget limit");
+      if (!emergencyGoal)          issues.push("🛡️ Set up an Emergency Fund goal");
+      if (pendingGoals.length===0 && goals.length===0) issues.push("🎯 Create savings goals to build wealth");
+      const lines = ["📊 Financial Health Report — " + month + "\n"];
+      lines.push("Grade: "+grade+" | Savings Rate: "+savePct+"% | Spent: "+spentPct+"% of income");
+      lines.push("Income: "+fmtINR(totalInc)+" | Expenses: "+fmtINR(totalExp)+" | Remaining: "+fmtINR(remaining));
+      if (momDelta!==null) lines.push("vs Last Month: "+(momDelta>0?"+":"")+momDelta+"%");
+      if (issues.length>0) {
+        lines.push("\nAreas to improve:");
+        issues.forEach(i=>lines.push(i));
       } else {
-        parts.push("");
-        parts.push("You are in great shape! Focus on growing your investments now.");
+        lines.push("\n🌟 You're in excellent financial shape! Keep it up.");
       }
-      return nl(parts);
+      lines.push("\n💡 Check the Insights tab for detailed charts and month-over-month comparisons.");
+      return lines.join("\n");
     }
 
-    if (intent === "invest") {
-      const surplus = Math.max(0,remaining);
-      const parts = [];
-      parts.push("Investment Guide for Indians");
-      parts.push("");
-      if (hasData && surplus>0) {
-        parts.push("You have " + fmtINR(surplus) + " available to invest this month.");
-        parts.push("");
-      }
-      parts.push("The investment ladder  -  follow in order:");
-      parts.push("");
-      parts.push("Step 1: Emergency Fund (before investing anything!)");
-      parts.push("  Target: " + fmtINR(hasData?Math.round(totalExp*6):300000) + " in a liquid mutual fund");
-      parts.push("");
-      parts.push("Step 2: Tax-saving under 80C (limit Rs 1.5L/year)");
-      parts.push("  Best option: ELSS Mutual Fund (3-year lock-in + equity returns)");
-      parts.push("  Also: PPF (safe, 7.1% tax-free), EPF (if salaried)");
-      parts.push("");
-      parts.push("Step 3: Long-term equity SIPs");
-      parts.push("  Best for beginners: Nifty 50 Index Fund");
-      parts.push("  Start with Rs 500/month  -  increase 10% every year");
-      parts.push("");
-      parts.push("Step 4: NPS for extra tax saving (Rs 50,000 under 80CCD)");
-      parts.push("");
-      parts.push("SIP returns at 12% CAGR:");
-      parts.push("  Rs 3,000/month x 15 years = approx Rs 30 Lakhs");
-      parts.push("  Rs 5,000/month x 15 years = approx Rs 50 Lakhs");
-      parts.push("  Rs 10,000/month x 15 years = approx Rs 1 Crore");
-      parts.push("");
-      parts.push("Key principle: Start small, start NOW. Time in market beats timing the market.");
-      parts.push("");
-      parts.push("Note: This is educational guidance. For personalised plans, consult a SEBI-registered advisor.");
-      return nl(parts);
+    /* ── INVEST ── */
+    if (/invest|sip|mutual fund|stock|equity|nifty|sensex|return/.test(q)) {
+      const surplus = Math.max(0, remaining);
+      const lines = ["📈 Investment Guidance\n"];
+      if (surplus>0) lines.push("Available to invest: " + fmtINR(surplus) + "/month\n");
+      lines.push("Recommended beginner approach:");
+      lines.push("1. Build Emergency Fund first (" + fmtINR(Math.round(totalExp*6)) + " target)");
+      lines.push("2. Start SIP in Nifty 50 Index Fund — even ₹1,000/month");
+      lines.push("3. Increase SIP by 10% every year\n");
+      lines.push("Quick maths:");
+      lines.push("₹3,000/month SIP × 15 years @ 12% = ~₹30 Lakhs");
+      lines.push("₹5,000/month SIP × 15 years @ 12% = ~₹50 Lakhs");
+      lines.push("₹10,000/month SIP × 15 years @ 12% = ~₹1 Crore\n");
+      lines.push("⚠️ This is general guidance. Consult a SEBI-registered advisor for personalised plans.");
+      return lines.join("\n");
     }
 
-    if (intent === "tax") {
-      const parts = [];
-      parts.push("Tax Saving Guide  -  India");
-      parts.push("");
-      parts.push("Section 80C (limit: Rs 1,50,000/year)");
-      parts.push("  - ELSS Mutual Funds (best  -  3yr lock-in + equity returns)");
-      parts.push("  - PPF (safe  -  7.1%, 15yr, tax-free returns)");
-      parts.push("  - EPF contributions (automatic if salaried)");
-      parts.push("  - Life insurance premium");
-      parts.push("  - Home loan principal repayment");
-      parts.push("  - Children tuition fees");
-      parts.push("");
-      parts.push("Section 80D  -  Health Insurance");
-      parts.push("  - Self + family: up to Rs 25,000");
-      parts.push("  - Senior citizen parents: additional Rs 50,000");
-      parts.push("");
-      parts.push("HRA  -  House Rent Allowance");
-      parts.push("  - Salaried employees can claim HRA exemption");
-      parts.push("  - Keep rent receipts if monthly rent > Rs 8,333");
-      parts.push("");
-      parts.push("NPS  -  Additional Rs 50,000 under 80CCD(1B) over and above 80C");
-      parts.push("");
-      parts.push("New vs Old Tax Regime:");
-      parts.push("  - Old regime: Better if total deductions > Rs 3.75 Lakhs");
-      parts.push("  - New regime: Better for lower deductions, simpler calculation");
-      parts.push("");
-      parts.push("File ITR before July 31 to avoid penalties!");
-      return nl(parts);
-    }
-
-    if (intent === "subscriptions") {
-      const parts = [];
-      parts.push("Subscription Audit Guide");
-      parts.push("");
+    /* ── SUBSCRIPTIONS ── */
+    if (/subscription|netflix|ott|spotify|cancel|streaming/.test(q)) {
+      const lines = ["🔄 Subscription Audit\n"];
       if (subAmt>0) {
-        parts.push("You spend " + fmtINR(subAmt) + "/month = " + fmtINR(subAmt*12) + "/year on subscriptions.");
-        parts.push("");
+        lines.push("Current spend: " + fmtINR(subAmt) + "/month = " + fmtINR(subAmt*12) + "/year");
+        lines.push("That's " + Math.round((subAmt/totalInc)*100) + "% of your income on subscriptions.\n");
       }
-      parts.push("How to audit (takes 10 minutes):");
-      parts.push("1. List every subscription  -  check bank/UPI statements");
-      parts.push("2. Ask: Did I use this in the last 30 days?");
-      parts.push("3. Cancel every No answer immediately");
-      parts.push("4. Switch to annual plans for services you keep (saves 20-40%)");
-      parts.push("5. Share family plans  -  Netflix/Spotify allow multiple profiles");
-      parts.push("");
-      parts.push("Common ones to review: Netflix, Amazon Prime, Hotstar, Spotify,");
-      parts.push("YouTube Premium, gym membership, cloud storage plans");
-      parts.push("");
-      parts.push("Try the Subscription Slayer challenge in the Challenges tab!");
-      return nl(parts);
+      lines.push("How to audit:");
+      lines.push("1. List every subscription with cost");
+      lines.push("2. Check last login date for each");
+      lines.push("3. Cancel anything unused in 30 days");
+      lines.push("4. Switch to annual plans (saves 20–40%)");
+      lines.push("5. Share family plans where possible\n");
+      lines.push("💡 Try the Subscription Slayer challenge in the 🏆 Challenges tab!");
+      return lines.join("\n");
     }
 
-    if (intent === "income") {
+    /* ── CHALLENGE / TIPS ── */
+    if (/tip|trick|challeng|advice|improve|better|habit/.test(q)) {
+      const lines = ["💡 Top Financial Tips for " + month + "\n"];
+      lines.push("1. 50/30/20 Rule — Needs ≤50% · Wants ≤30% · Savings ≥20%");
+      lines.push("2. Pay yourself first — save before you spend");
+      lines.push("3. 24-hour rule — wait a day before any ₹500+ purchase");
+      lines.push("4. Track every rupee — log expenses daily in the Dashboard");
+      lines.push("5. Review weekly — 5 mins every Sunday checking your heatmap");
+      lines.push("6. Automate savings — set a standing instruction on salary day");
+      lines.push("7. Challenge yourself — try a No-Spend week this month\n");
+      lines.push("What I can help you with:");
+      lines.push("• 'How can I save more?' → Personalised savings plan");
+      lines.push("• 'Where am I overspending?' → Category breakdown");
+      lines.push("• 'Review my goals' → Goal progress analysis");
+      lines.push("• 'How are my loans?' → EMI health check");
+      lines.push("• 'What is my financial health?' → Full report");
+      lines.push("• 'How to invest?' → Beginner investment guide");
+      return lines.join("\n");
+    }
+
+    /* ── INCOME ── */
+    if (/income|salary|earn|revenue|source/.test(q)) {
+      const lines = ["💵 Income Analysis — " + month + "\n"];
       const srcs = curMonth.incomeSources;
-      if (srcs.length===0) return "No income recorded for " + month + ". Go to Dashboard and click Add Income to add your salary and other sources.";
-      const parts = [];
-      parts.push("Income Analysis  -  " + month);
-      parts.push("");
-      parts.push("Total: " + fmtINR(totalInc) + " from " + srcs.length + " source(s)");
-      srcs.forEach(s => parts.push("  - " + s.label + ": " + fmtINR(s.amount)));
-      parts.push("");
-      parts.push("Allocation:");
-      parts.push("  Expenses:  " + fmtINR(totalExp) + " (" + spentPct + "%)");
-      if (totalEMI>0) parts.push("  EMIs:      " + fmtINR(totalEMI) + " (" + emiPct + "%)");
-      parts.push("  Remaining: " + fmtINR(remaining) + " (" + savePct + "%)");
-      parts.push("");
-      parts.push("Ways to grow your income:");
-      parts.push("- Ask for appraisal  -  most companies expect it annually");
-      parts.push("- Freelance or consult in your field on weekends");
-      parts.push("- Monetise a skill: tutoring, music, coding, writing");
-      parts.push("- Invest consistently  -  your money earns money while you sleep");
-      return nl(parts);
-    }
-
-    if (intent === "transport") {
-      const parts = [];
-      parts.push("Transport Spending  -  " + month);
-      parts.push("");
-      if (transAmt>0) {
-        const ideal = Math.round(totalInc*0.10);
-        parts.push("You spent: " + fmtINR(transAmt) + "  |  Ideal (10%): " + fmtINR(ideal));
-        parts.push(transAmt>ideal ? "Over by " + fmtINR(transAmt-ideal) + "  -  let us fix this." : "Within target  -  good!");
-        parts.push("");
+      if (srcs.length===0) return "No income recorded for "+month+". Go to Dashboard → + Add Income to add your salary and other sources.";
+      lines.push("Total income: " + fmtINR(totalInc));
+      lines.push("Sources: " + srcs.length + "\n");
+      srcs.forEach(s => lines.push("💼 " + s.label + ": " + fmtINR(s.amount)));
+      lines.push("\nIncome allocation:");
+      lines.push("→ Expenses: " + fmtINR(totalExp) + " (" + spentPct + "%)");
+      lines.push("→ EMI: " + fmtINR(totalEMI));
+      lines.push("→ Remaining: " + fmtINR(remaining) + " (" + savePct + "%)");
+      if (momDelta!==null&&prevData) {
+        const prevInc = prevData.incomeSources?.reduce((s,x)=>s+x.amount,0)||0;
+        if (prevInc>0) lines.push("\nvs Last Month: " + (totalInc>=prevInc?"📈 Up "+fmtINR(totalInc-prevInc):"📉 Down "+fmtINR(prevInc-totalInc)));
       }
-      parts.push("Tips to reduce transport costs:");
-      parts.push("- Metro + auto is 40-60% cheaper than Ola/Uber daily");
-      parts.push("- Carpool with colleagues to split fuel and toll");
-      parts.push("- Work from home 2 days a week if possible");
-      parts.push("- Monthly metro/bus pass is cheaper than per-trip cost");
-      parts.push("- Keep tyres inflated  -  bad pressure reduces mileage 10%");
-      parts.push("");
-      parts.push("Try the Green Commute Week challenge in the Challenges tab!");
-      return nl(parts);
+      return lines.join("\n");
     }
 
-    if (intent === "shopping") {
-      const parts = [];
-      parts.push("Shopping Spending  -  " + month);
-      parts.push("");
-      if (shopAmt>0) {
-        const ideal = Math.round(totalInc*0.10);
-        parts.push("You spent: " + fmtINR(shopAmt) + "  |  Ideal (10%): " + fmtINR(ideal));
-        parts.push(shopAmt>ideal ? "Over by " + fmtINR(shopAmt-ideal) : "Within target  -  well done!");
-        parts.push("");
-      }
-      parts.push("Tips to control shopping:");
-      parts.push("- 24-hour rule: Wait a day before any purchase above Rs 500");
-      parts.push("- Uninstall shopping apps from home screen");
-      parts.push("- Unsubscribe from all promotional emails");
-      parts.push("- Keep a wishlist  -  if still wanted in 30 days, then buy");
-      parts.push("- Ask: Am I buying because I need it or because it is on sale?");
-      parts.push("");
-      parts.push("Try the Zero Impulse Month challenge in the Challenges tab!");
-      return nl(parts);
+    /* ── GREETING ── */
+    if (/^(hi|hello|hey|namaste|helo|hii)/.test(q)) {
+      return "👋 Namaste! I'm your Vatsu AI Advisor.\n\nI can see your " + month + " data:\n• Income: " + fmtINR(totalInc) + "\n• Spent: " + fmtINR(totalExp) + " (" + spentPct + "%)\n• Remaining: " + fmtINR(remaining) + "\n• Savings Rate: " + savePct + "%\n\nAsk me anything:\n• How can I save more?\n• Where am I overspending?\n• Review my goals\n• How are my loans?\n• What is my financial health?";
     }
 
-    if (intent === "terms") {
-      const t = question.toLowerCase();
-      if (t.includes("sip")) return nl(["SIP  -  Systematic Investment Plan","","A way to invest a fixed amount in mutual funds every month  -  like an EMI but for building wealth instead of repaying debt.","","Even Rs 500/month in a Nifty 50 index fund, started at age 25, grows to Rs 1.7 Crore by age 60 at 12% CAGR.","","Benefits: Rupee cost averaging, no need to time the market, disciplined saving, starts from Rs 100/month."]);
-      if (t.includes("cagr")) return nl(["CAGR  -  Compound Annual Growth Rate","","The average annual return rate of an investment. If Rs 1 lakh grew to Rs 2 lakh in 6 years, CAGR = 12.25%.","","It is the most honest way to compare investments. FD gives 7% CAGR. Good equity fund gives 12-15% CAGR over 10+ years."]);
-      if (t.includes("elss")) return nl(["ELSS  -  Equity Linked Savings Scheme","","A mutual fund that saves tax under Section 80C (up to Rs 1.5L/year) with only 3-year lock-in.","","Usually the BEST 80C option because you get equity market returns (12-15% historically) alongside tax saving.","","How to start: Any mutual fund app (Zerodha, Groww, Kuvera)  -  search ELSS and start SIP."]);
-      if (t.includes("ppf")) return nl(["PPF  -  Public Provident Fund","","Government-backed savings with 7.1% guaranteed, completely tax-free returns. 15-year lock-in but very safe.","","Contributions up to Rs 1.5L/year qualify for 80C deduction. Interest and maturity are both tax-free.","","Best for: Conservative investors, long-term safety, guaranteed returns without market risk."]);
-      if (t.includes("nps")) return nl(["NPS  -  National Pension System","","A government pension scheme with extra Rs 50,000 tax deduction under 80CCD(1B)  -  beyond the Rs 1.5L 80C limit.","","Your money is invested in equity, government bonds, and corporate bonds. Returns are market-linked.","","Drawback: Locked till age 60. At retirement, 40% must be used for annuity (pension)."]);
-      if (t.includes("cibil") || t.includes("credit score")) return nl(["Credit Score / CIBIL Score","","Ranges from 300 to 900. Above 750 = excellent. Below 650 = loan rejections likely.","","What affects it:","- Payment history (35%) - pay EMIs on time, always","- Credit utilisation (30%) - keep below 30% of card limit","- Credit history length (15%) - keep old cards active","- New credit inquiries (10%) - do not apply for too many loans","","Check free once a year on CIBIL website or apps like CRED/Paytm."]);
-      if (t.includes("inflation")) return nl(["Inflation  -  The Silent Wealth Destroyer","","At 6% inflation: Rs 1 lakh today = Rs 74,000 in 5 years = Rs 42,000 in 15 years in real value.","","What this means for your money:","- Savings account (4%) LOSES value vs 6% inflation","- FD (7%) barely keeps up after paying tax on interest","- Equity mutual funds (12-15% historically) actually BEAT inflation","","Solution: Never keep long-term savings in just a savings account. Invest in equity SIPs."]);
-      if (t.includes("compound")) return nl(["Compound Interest  -  The 8th Wonder of the World","","Earning interest on your interest. The longer you wait, the more powerful it gets.","","Example: Rs 1 lakh at 12% per year","- After 5 years:  Rs 1.76 lakh","- After 10 years: Rs 3.11 lakh","- After 20 years: Rs 9.65 lakh","- After 30 years: Rs 29.96 lakh","","The lesson: Start investing as early as possible, even small amounts."]);
-      if (t.includes("nav")) return nl(["NAV  -  Net Asset Value","","The price of one unit of a mutual fund, calculated daily.","","A lower NAV does NOT mean the fund is cheaper or better. What matters is the fund's quality and future returns, not the current NAV.","","Think of it like a stock price  -  the history and growth rate matter, not the absolute number."]);
-      if (t.includes("liquid fund")) return nl(["Liquid Mutual Fund","","A mutual fund that invests in very short-term instruments. Can be redeemed within 1 business day.","","Returns: 6-7%  -  much better than savings account (4%)","Ideal for: Emergency fund, money you need in 1-12 months","","Popular ones: Nippon India Liquid Fund, HDFC Liquid Fund, SBI Liquid Fund"]);
-      if (t.includes("net worth")) return nl(["Net Worth  -  Your Real Financial Score","","Net Worth = Total Assets - Total Liabilities","","Assets: Cash, FDs, investments, property value, gold, EPF/PPF balance","Liabilities: All outstanding loan balances","","Why it matters: Salary shows how much you earn. Net worth shows how much you have built. Focus on growing net worth, not just income.","",(hasData&&loans.length>0?"Your current loan liabilities: " + fmtINR(loans.reduce((s,l)=>s+l.principal,0)):"")]);
-      return nl(["I can explain many Indian finance terms.","","Ask about any of these:","- SIP, ELSS, PPF, NPS (investing and tax saving)","- CAGR, XIRR, NAV (understanding returns)","- CIBIL / Credit Score (loan eligibility)","- Inflation, Compound Interest (money concepts)","- Liquid Fund, FD, RD (where to keep savings)","- Net Worth (measuring financial progress)"]);
-    }
-
-    if (intent === "motivation") {
-      const options = [
-        nl(["Financial stress is completely normal  -  and the fact that you are tracking your finances already puts you ahead of most people.","","Small steps beat perfect plans. Even saving Rs 500 more this month than last month is real progress.","","One thing to remember: You are not broke. You are pre-wealthy. Every rupee you invest today is working silently for you 24/7.","","What one small action can you take today? Even setting up a Rs 500 SIP counts."] ),
-        nl(["Every person who built wealth started somewhere  -  often from a worse position than you are in now.","","The formula is simple: Earn more than you spend. Save consistently. Invest patiently. Repeat.","","The hardest part is not the math  -  it is the discipline. And you are already showing that discipline by being here.","","Focus on what you can control: your spending choices, your savings habit, your financial knowledge. The results will follow."]),
-        nl(["Money anxiety is one of the most common forms of stress. You are not alone.","","The most powerful thing you can do right now: Do not run away from the numbers. Face them. The awareness itself starts to change things.","","Your income is not the problem. The gap between income and savings is what we need to close  -  and I am here to help you do that step by step.","","What is worrying you most right now? Tell me and we will work through it together."])
-      ];
-      return options[Math.floor(Math.random()*options.length)];
-    }
-
-    if (intent === "tips") {
-      const parts = [];
-      parts.push("10 Habits of Financially Healthy Indians");
-      parts.push("");
-      parts.push("1.  Pay yourself first  -  save before you spend, not after");
-      parts.push("2.  Follow 50/30/20  -  needs, wants, savings every month");
-      parts.push("3.  Emergency fund first  -  6 months expenses before investing");
-      parts.push("4.  Invest early  -  Rs 3,000/month from 25 beats Rs 6,000 from 35");
-      parts.push("5.  Avoid lifestyle inflation  -  raises should increase savings not spending");
-      parts.push("6.  24-hour rule  -  wait before any purchase above Rs 500");
-      parts.push("7.  Track everything  -  what gets measured gets managed");
-      parts.push("8.  Keep EMIs below 30% of income");
-      parts.push("9.  Review finances every Sunday  -  10 minutes is enough");
-      parts.push("10. Increase SIP by 10% automatically every year");
-      if (hasData) {
-        parts.push("");
-        parts.push("For you right now, the most impactful habit is:");
-        if (savePct<20) parts.push("Automate saving " + fmtINR(Math.round(totalInc*0.20)) + " on salary day");
-        else if (!emergencyGoal) parts.push("Build your emergency fund  -  target " + fmtINR(Math.round(totalExp*6)));
-        else parts.push("Start or increase your SIP investment this month");
-      }
-      return nl(parts);
-    }
-
-    if (intent === "networth") {
-      const parts = [];
-      parts.push("Net Worth Calculator");
-      parts.push("");
-      parts.push("Net Worth = Total Assets - Total Liabilities");
-      parts.push("");
-      parts.push("Your liabilities in Vatsu:");
-      if (loans.length>0) {
-        loans.forEach(l => parts.push("  - " + l.bankName + " " + l.loanType + ": " + fmtINR(l.principal)));
-        parts.push("  Total loans: " + fmtINR(loans.reduce((s,l)=>s+l.principal,0)));
-      } else {
-        parts.push("  No loans  -  great position to start building net worth!");
-      }
-      parts.push("");
-      parts.push("Track your assets in the Goals tab:");
-      parts.push("  - Emergency fund, FDs, savings");
-      parts.push("  - Mutual fund / stock portfolio");
-      parts.push("  - EPF and PPF balance");
-      parts.push("  - Gold value");
-      parts.push("  - Property value");
-      parts.push("");
-      parts.push("How to grow net worth:");
-      parts.push("1. Reduce liabilities  -  prepay high-interest loans");
-      parts.push("2. Grow assets  -  invest in equity SIPs consistently");
-      parts.push("3. Avoid depreciating purchases  -  cars lose 15-20% per year");
-      parts.push("4. Target: Net worth = 10-15x annual income at retirement");
-      return nl(parts);
-    }
-
-    if (intent === "insurance") {
-      const parts = [];
-      parts.push("Insurance Guide");
-      parts.push("");
-      parts.push("The 2 most important insurances:");
-      parts.push("");
-      parts.push("1. Term Life Insurance (if you have dependents)");
-      parts.push("   Cover: 10-15x your annual income");
-      parts.push("   Cost: Rs 8,000-15,000/year for Rs 1 Crore cover");
-      parts.push("   Buy as early as possible  -  premium is lower when young");
-      parts.push("   AVOID: ULIPs, endowment plans  -  high fees, poor returns");
-      parts.push("");
-      parts.push("2. Health Insurance (everyone needs this)");
-      parts.push("   Minimum cover: Rs 5-10 Lakhs for self, Rs 10-15L for family");
-      parts.push("   Cost: Rs 8,000-20,000/year for decent family cover");
-      parts.push("   Tax benefit: Up to Rs 25,000 under Section 80D");
-      parts.push("   Even if employer gives cover  -  buy personal policy too");
-      parts.push("   (You lose employer cover if you change jobs)");
-      parts.push("");
-      parts.push("Rule: Insurance is NOT an investment.");
-      parts.push("Buy term + health. Invest the rest in mutual funds.");
-      return nl(parts);
-    }
-
-    if (intent === "realestate") {
-      const parts = [];
-      parts.push("Rent vs Buy  -  Indian Real Estate Guide");
-      parts.push("");
-      parts.push("Buy a home if:");
-      parts.push("- You plan to stay 7+ years in the same city");
-      parts.push("- EMI is not more than 40% of income");
-      parts.push("- You have 20% down payment ready (no loan for down payment)");
-      parts.push("- Property price is below 300x monthly rent");
-      parts.push("");
-      parts.push("Keep renting if:");
-      parts.push("- You may relocate within 5 years");
-      parts.push("- EMI would exceed 40% of your income");
-      parts.push("- Investing the down payment in equity gives better returns");
-      parts.push("");
-      parts.push("Home loan tax benefits:");
-      parts.push("- Principal repayment: Rs 1.5L under 80C");
-      parts.push("- Interest paid: Up to Rs 2L under Section 24B");
-      parts.push("");
-      parts.push("My honest advice: Do not buy because of family pressure or FOMO.");
-      parts.push("Buy when the financial numbers genuinely make sense for you.");
-      return nl(parts);
-    }
-
-    if (intent === "creditScore") {
-      const parts = [];
-      parts.push("CIBIL / Credit Score Guide");
-      parts.push("");
-      parts.push("Score ranges:");
-      parts.push("750-900: Excellent  -  best loan rates, easy approvals");
-      parts.push("700-750: Good  -  most loans at fair rates");
-      parts.push("650-700: Average  -  some rejections, higher interest");
-      parts.push("Below 650: Poor  -  most loans rejected");
-      parts.push("");
-      parts.push("How to build a great score:");
-      parts.push("1. Pay ALL EMIs and credit card bills on time  -  most important!");
-      parts.push("2. Keep credit card usage below 30% of limit");
-      parts.push("3. Do not apply for many loans or cards in short period");
-      parts.push("4. Keep old credit cards active  -  history length matters");
-      parts.push("");
-      parts.push("How to check: CIBIL website (free once/year) or CRED, Paytm, BankBazaar apps.");
-      parts.push("");
-      parts.push("A low score takes 6-12 months of consistent repayments to improve.");
-      return nl(parts);
-    }
-
-    /* --- DEFAULT: friendly catch-all with real data --- */
-    if (!hasData) return noData;
-    const parts2 = [];
-    parts2.push("I understood your question! Here is your current " + month + " status:");
-    parts2.push("");
-    parts2.push("Income: " + fmtINR(totalInc) + "  |  Spent: " + fmtINR(totalExp) + " (" + spentPct + "%)  |  Remaining: " + fmtINR(remaining));
-    parts2.push("Savings Rate: " + savePct + "% " + (savePct>=20?" -  Great!":savePct>=10?" -  Can improve":" -  Needs work"));
-    if (topCat) parts2.push("Top expense: " + topCat.icon + " " + topCat.label + " (" + fmtINR(topCat.spent) + ")");
-    parts2.push("");
-    parts2.push("Topics I can help you with:");
-    parts2.push("- Savings plan and where to save");
-    parts2.push("- Spending breakdown and budget");
-    parts2.push("- Investment guide (SIP, ELSS, PPF, NPS)");
-    parts2.push("- Tax saving under 80C, HRA, NPS");
-    parts2.push("- Emergency fund setup");
-    parts2.push("- Loan and EMI strategy");
-    parts2.push("- Goal planning and tracking");
-    parts2.push("- Financial terms explained");
-    parts2.push("- Motivation and financial habits");
-    parts2.push("");
-    parts2.push("Just ask me anything  -  in plain English or Hinglish!");
-    return nl(parts2);
-  }
-
-  function analyse(question) {
-    const intent = detectIntent(question);
-    return respond(intent, question);
+    /* ── DEFAULT CATCH-ALL ── */
+    return "I analysed your " + month + " finances:\n• Income: " + fmtINR(totalInc) + "\n• Spent: " + fmtINR(totalExp) + " (" + spentPct + "%)\n• Remaining: " + fmtINR(remaining) + "\n• Savings Rate: " + savePct + "%\n" + (topCat?"• Top expense: "+topCat.icon+" "+topCat.label+" ("+fmtINR(topCat.spent)+")\n":"") + "\nTry asking:\n• How can I save more?\n• Where am I overspending?\n• What is my financial health?\n• Review my goals\n• How are my loans?\n• Emergency fund advice\n• Investment tips";
   }
 
   function send() {
     const q = input.trim();
     if (!q || loading) return;
-    setMsgs(p => [...p, { role:"user", content:q }]);
+    const userMsg = { role:"user", content:q };
+    setMsgs(p => [...p, userMsg]);
     setInput("");
     setLoading(true);
     setTimeout(() => {
-      setMsgs(p => [...p, { role:"assistant", content:analyse(q) }]);
+      const reply = analyse(q);
+      setMsgs(p => [...p, { role:"assistant", content:reply }]);
       setLoading(false);
-    }, 400);
+    }, 500);
   }
 
-  const quickQ = ["How can I save more?","Where is my money going?","Best investments for me","Tax saving tips","Emergency fund guide","My financial health","Explain SIP","Reduce food costs","Loan strategy","Motivate me!"];
+  const quickQ = ["How can I save more?","Where am I overspending?","What is my financial health?","Emergency fund advice","Review my goals","How are my loans?","Investment tips","Food spending tips"];
 
   function MsgText({ text, isUser }) {
-    if (isUser) return <span style={{ fontSize:13, fontFamily:BODY, fontWeight:600 }}>{text}</span>;
+    if (isUser) return <span style={{fontSize:13,fontFamily:BODY,fontWeight:600}}>{text}</span>;
     return (
-      <div style={{ fontSize:13, fontFamily:BODY, lineHeight:1.8 }}>
-        {text.split("\n").map((line, i) => {
-          if (!line.trim()) return <div key={i} style={{ height:5 }} />;
-          return <div key={i} style={{ marginBottom:2 }}>{line}</div>;
+      <div style={{fontSize:13,fontFamily:BODY,lineHeight:1.75}}>
+        {text.split("\n").map((line,i) => {
+          if (!line.trim()) return <div key={i} style={{height:5}}/>;
+          const parts = line.split(/(\*\*[^*]+\*\*)/g).map((p,j) =>
+            p.startsWith("**")&&p.endsWith("**")
+              ? <strong key={j} style={{color:T.textBright}}>{p.slice(2,-2)}</strong>
+              : p
+          );
+          return <div key={i} style={{marginBottom:3}}>{parts}</div>;
         })}
       </div>
     );
   }
 
-  const showWelcome = msgs.length === 0;
+  /* Welcome message shown before first send */
+  const showWelcome = msgs.length===0;
 
   return (
-    <div style={{ display:"flex", flexDirection:"column", height:580, background:T.cardGrad, border:"1px solid "+T.border, borderRadius:20, overflow:"hidden" }}>
-      <div style={{ padding:"14px 18px", background:theme==="dark"?"linear-gradient(135deg,#060f1c,#04090f)":"linear-gradient(135deg,#0d2340,#1a3a62)", borderBottom:"1px solid "+T.border, flexShrink:0 }}>
-        <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-          <div style={{ width:42, height:42, borderRadius:"50%", background:"linear-gradient(135deg,#1dd1a1,#0abf8a)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, boxShadow:"0 0 18px #1dd1a155", flexShrink:0 }}>🤖</div>
-          <div style={{ flex:1 }}>
-            <div style={{ fontWeight:700, color:"#f0f8ff", fontFamily:TF, fontSize:15 }}>Vatsu CA Advisor</div>
-            <div style={{ fontSize:11, color:"#1dd1a1", fontFamily:BODY, marginTop:1 }}>Smart Finance Engine  -  Works Everywhere  -  100% Free  -  No Setup Needed</div>
+    <div style={{display:"flex",flexDirection:"column",height:560,background:T.cardGrad,border:"1px solid "+T.border,borderRadius:20,overflow:"hidden"}}>
+
+      {/* Header */}
+      <div style={{padding:"14px 18px",background:theme==="dark"?"linear-gradient(135deg,#060f1c,#04090f)":"linear-gradient(135deg,#0d2340,#1a3a62)",borderBottom:"1px solid "+T.border}}>
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
+          <div style={{width:40,height:40,borderRadius:"50%",background:"linear-gradient(135deg,#1dd1a1,#0abf8a)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,boxShadow:"0 0 16px #1dd1a155",flexShrink:0}}>🤖</div>
+          <div style={{flex:1}}>
+            <div style={{fontWeight:700,color:"#f0f8ff",fontFamily:TF,fontSize:15}}>Vatsu AI Advisor</div>
+            <div style={{fontSize:11,color:"#1dd1a1",fontFamily:BODY,marginTop:1}}>Smart Finance Engine · Works Everywhere · 100% Free · No API needed</div>
           </div>
-          <div style={{ padding:"4px 12px", borderRadius:20, background:"#1dd1a122", border:"1px solid #1dd1a155", fontSize:10, color:"#1dd1a1", fontFamily:BODY, fontWeight:700 }}>LIVE</div>
+          <div style={{padding:"4px 12px",borderRadius:20,background:"#1dd1a122",border:"1px solid #1dd1a144",fontSize:10,color:"#1dd1a1",fontFamily:BODY,fontWeight:700}}>LIVE</div>
         </div>
       </div>
 
+      {/* Welcome screen */}
       {showWelcome && (
-        <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"20px", gap:14, overflowY:"auto" }}>
-          <div style={{ fontSize:44 }}>🤖</div>
-          <div style={{ textAlign:"center", maxWidth:340 }}>
-            <div style={{ fontSize:17, fontWeight:800, color:T.textBright, fontFamily:TF, marginBottom:6 }}>Namaste! I am your CA Advisor</div>
-            <div style={{ fontSize:13, color:T.textSub, fontFamily:BODY, lineHeight:1.7 }}>I know your real numbers and give personalised advice on savings, investments, tax, loans, goals and more. Works like talking to a friendly CA!</div>
+        <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"24px 20px",gap:16}}>
+          <div style={{fontSize:48}}>🤖</div>
+          <div style={{textAlign:"center"}}>
+            <div style={{fontSize:17,fontWeight:800,color:T.textBright,fontFamily:TF,marginBottom:6}}>Your Personal Finance Advisor</div>
+            <div style={{fontSize:13,color:T.textSub,fontFamily:BODY,lineHeight:1.7,maxWidth:340}}>
+              I know your real financial data and give you instant, personalised advice — completely offline, no internet needed.
+            </div>
           </div>
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, width:"100%", maxWidth:360 }}>
-            {[["Save more money","💰"],["Spending analysis","📊"],["Investment guide","📈"],["Tax saving tips","🏛️"],["Goal planning","🎯"],["Loan strategy","🏦"],["Financial terms","💡"],["Emergency fund","🛡️"]].map(([label, icon]) => (
-              <div key={label} onClick={() => setInput(label)} style={{ padding:"10px 12px", background:T.surface3, border:"1px solid "+T.border, borderRadius:12, fontSize:12, color:T.textSub, fontFamily:BODY, display:"flex", alignItems:"center", gap:8, cursor:"pointer" }}>
-                <span style={{ fontSize:18 }}>{icon}</span>{label}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,width:"100%",maxWidth:340}}>
+            {["💰 Savings plan","📊 Spending analysis","🎯 Goal review","🏦 Loan health","💡 Budget tips","📈 Investment basics"].map(chip=>(
+              <div key={chip} style={{padding:"8px 12px",background:T.surface3,border:"1px solid "+T.border,borderRadius:10,fontSize:12,color:T.textSub,fontFamily:BODY,textAlign:"center",cursor:"pointer"}}
+                onClick={()=>{ setInput(chip.replace(/^[^\s]+\s/,"")); }}>
+                {chip}
               </div>
             ))}
           </div>
-          <div style={{ fontSize:11, color:T.textMuted, fontFamily:BODY, textAlign:"center" }}>Or type any finance question below</div>
+          <div style={{fontSize:12,color:T.textMuted,fontFamily:BODY}}>Type a question or pick a topic above ↑</div>
         </div>
       )}
 
+      {/* Messages */}
       {!showWelcome && (
-        <div style={{ flex:1, overflowY:"auto", padding:"14px 16px", display:"flex", flexDirection:"column", gap:12 }}>
-          {msgs.map((m, i) => (
-            <div key={i} style={{ display:"flex", justifyContent:m.role==="user"?"flex-end":"flex-start", gap:8 }}>
-              {m.role==="assistant" && <div style={{ width:28, height:28, borderRadius:"50%", background:"linear-gradient(135deg,#1dd1a1,#0abf8a)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, flexShrink:0, marginTop:2 }}>🤖</div>}
-              <div style={{ maxWidth:"84%", padding:"12px 15px", borderRadius:m.role==="user"?"18px 18px 4px 18px":"18px 18px 18px 4px", background:m.role==="user"?"linear-gradient(135deg,#1dd1a1,#0abf8a)":theme==="dark"?"linear-gradient(135deg,#0b1825,#071018)":"#f0f6ff", color:m.role==="user"?"#02080f":T.text, border:m.role==="assistant"?"1px solid "+T.border2:"none", boxShadow:m.role==="user"?"0 4px 14px #1dd1a133":"0 2px 8px #00000018" }}>
-                <MsgText text={m.content} isUser={m.role==="user"} />
+        <div style={{flex:1,overflowY:"auto",padding:"14px 16px",display:"flex",flexDirection:"column",gap:12}}>
+          {msgs.map((m,i) => (
+            <div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start",gap:8}}>
+              {m.role==="assistant"&&<div style={{width:28,height:28,borderRadius:"50%",background:"linear-gradient(135deg,#1dd1a1,#0abf8a)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,flexShrink:0,marginTop:2}}>🤖</div>}
+              <div style={{maxWidth:"82%",padding:"11px 14px",borderRadius:m.role==="user"?"18px 18px 4px 18px":"18px 18px 18px 4px",background:m.role==="user"?"linear-gradient(135deg,#1dd1a1,#0abf8a)":theme==="dark"?"linear-gradient(135deg,#0b1825,#071018)":"#f0f6ff",color:m.role==="user"?"#02080f":T.text,border:m.role==="assistant"?"1px solid "+T.border2:"none",boxShadow:m.role==="user"?"0 4px 14px #1dd1a133":"0 2px 8px #00000022"}}>
+                <MsgText text={m.content} isUser={m.role==="user"}/>
               </div>
             </div>
           ))}
-          {loading && (
-            <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-              <div style={{ width:28, height:28, borderRadius:"50%", background:"linear-gradient(135deg,#1dd1a1,#0abf8a)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, flexShrink:0 }}>🤖</div>
-              <div style={{ display:"flex", gap:5, padding:"12px 16px", background:theme==="dark"?"#0b1825":"#f0f6ff", borderRadius:"18px 18px 18px 4px", border:"1px solid "+T.border2 }}>
-                {[0,1,2].map(ii => <div key={ii} style={{ width:8, height:8, borderRadius:"50%", background:"#1dd1a1", animation:"vPulse 1.2s "+(ii*0.2)+"s infinite" }} />)}
+          {loading&&(
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <div style={{width:28,height:28,borderRadius:"50%",background:"linear-gradient(135deg,#1dd1a1,#0abf8a)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,flexShrink:0}}>🤖</div>
+              <div style={{display:"flex",gap:5,padding:"12px 16px",background:theme==="dark"?"#0b1825":"#f0f6ff",borderRadius:"18px 18px 18px 4px",border:"1px solid "+T.border2}}>
+                {[0,1,2].map(i=><div key={i} style={{width:8,height:8,borderRadius:"50%",background:"#1dd1a1",animation:"vPulse 1.2s "+(i*0.2)+"s infinite"}}/>)}
               </div>
             </div>
           )}
-          <div ref={bottom} />
+          <div ref={bottom}/>
         </div>
       )}
 
-      <div style={{ padding:"8px 14px 4px", display:"flex", gap:6, overflowX:"auto", borderTop:"1px solid "+T.border, flexShrink:0 }}>
-        {quickQ.map(q => (
-          <button key={q} onClick={() => setInput(q)} style={{ whiteSpace:"nowrap", padding:"5px 12px", borderRadius:18, border:"1px solid "+T.border, background:"transparent", color:T.textSub, fontSize:11, cursor:"pointer", fontFamily:BODY }}>
+      {/* Quick chips */}
+      <div style={{padding:"8px 14px 4px",display:"flex",gap:6,overflowX:"auto",borderTop:"1px solid "+T.border}}>
+        {quickQ.map(q=>(
+          <button key={q} onClick={()=>setInput(q)} style={{whiteSpace:"nowrap",padding:"5px 12px",borderRadius:18,border:"1px solid "+T.border,background:"transparent",color:T.textSub,fontSize:11,cursor:"pointer",fontFamily:BODY,transition:"all .15s"}}
+            onMouseEnter={e=>{e.target.style.borderColor="#1dd1a1";e.target.style.color="#1dd1a1";}}
+            onMouseLeave={e=>{e.target.style.borderColor=T.border;e.target.style.color=T.textSub;}}>
             {q}
           </button>
         ))}
       </div>
 
-      <div style={{ padding:"10px 14px", borderTop:"1px solid "+T.border, display:"flex", gap:8, flexShrink:0 }}>
-        <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key==="Enter" && send()} placeholder="Ask anything about your finances..." style={{ ...IS2, flex:1, padding:"10px 14px" }} />
-        <Btn v="primary" onClick={send} sx={{ padding:"10px 20px", whiteSpace:"nowrap", opacity:loading?0.6:1 }}>Ask</Btn>
+      {/* Input */}
+      <div style={{padding:"10px 14px",borderTop:"1px solid "+T.border,display:"flex",gap:8}}>
+        <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&send()} placeholder="Ask anything about your finances..." style={{...IS2,flex:1,padding:"10px 14px"}}/>
+        <Btn v="primary" onClick={send} sx={{padding:"10px 18px",whiteSpace:"nowrap",opacity:loading?0.6:1}}>{loading?"...":"Ask"}</Btn>
       </div>
+
     </div>
   );
 }
